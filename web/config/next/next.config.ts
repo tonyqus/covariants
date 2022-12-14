@@ -93,6 +93,10 @@ const nextConfig: NextConfig = {
     config.experiments.topLevelAwait = true
     return config
   },
+  i18n: {
+    locales: ["en", "zh-CN"],
+    defaultLocale: "en",
+  },
 }
 
 const withMDX = getWithMDX({

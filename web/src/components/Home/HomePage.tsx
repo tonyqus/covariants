@@ -6,10 +6,12 @@ import { ClusterButtonPanelLayout } from 'src/components/ClusterButtonPanel/Clus
 import { NarrowPageContainer } from 'src/components/Common/ClusterSidebarLayout'
 import { Editable } from 'src/components/Common/Editable'
 import { Layout } from 'src/components/Layout/Layout'
-
+import { useRouter } from "next/router";
 import HomeContent from '../../../../content/Home.md'
+import HomeContent_zh from '../../../../content/Home_zh-CN.md'
 
 export function HomePage() {
+  const { locale} = useRouter();
   return (
     <Layout>
       <NarrowPageContainer>
@@ -23,7 +25,9 @@ export function HomePage() {
           <Col>
             <ClusterButtonPanelLayout>
               <Editable>
-                <HomeContent />
+                {
+                locale== "zh-CN"? <HomeContent_zh />:<HomeContent />
+                }
               </Editable>
             </ClusterButtonPanelLayout>
           </Col>
