@@ -20,6 +20,7 @@ import { Link } from 'src/components/Link/Link'
 import { LinkExternal } from 'src/components/Link/LinkExternal'
 import { TWITTER_USERNAME_RAW, URL_GITHUB } from 'src/constants'
 
+
 let navLinksLeft: Record<string, string> = {
   '/': 'Home',
   '/faq': 'FAQ',
@@ -29,6 +30,16 @@ let navLinksLeft: Record<string, string> = {
   '/cases': 'Cases',
   '/shared-mutations': 'Shared Mutations',
   '/acknowledgements': 'Acknowledgements',
+}
+let navLinksLeft_zh: Record<string, string> = {
+  '/': '首页',
+  '/faq': '常见问题',
+  '/variants': '病毒变种',
+  '/per-country': '按国家',
+  '/per-variant': '按病毒变种',
+  '/cases': '病例',
+  '/shared-mutations': '共享的突变',
+  '/acknowledgements': '共识',
 }
 
 export function matchingUrl(url: string, pathname: string): boolean {
@@ -140,10 +151,13 @@ export const BrandLogoLarge = styled(BrandLogoLargeBase)`
 `
 
 export function NavigationBar() {
-  const { pathname } = useRouter()
+  const { pathname,locale } = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const toggle = useCallback(() => setIsOpen(!isOpen), [isOpen])
-
+  if(locale=="zh-CN")
+  {
+    navLinksLeft= navLinksLeft_zh;
+  }
   return (
     <Navbar expand="md" color="light" light role="navigation">
       <Link href="/">
@@ -167,6 +181,16 @@ export function NavigationBar() {
         </NavWrappable>
 
         <Nav className="ml-auto" navbar>
+          <NavItem key="English">
+          <NavLink href="/">
+            <span>English</span>
+          </NavLink>
+          </NavItem>
+          <NavItem key="Chinese">
+          <NavLink href="/zh-CN">
+            <span>中文</span>
+          </NavLink>
+          </NavItem>
           {navLinksRight.map(({ text, title, url, alt, icon }) => (
             <NavItem key={title}>
               <NavLink tag={LinkRight} title={title} href={url} alt={alt} icon={null}>
