@@ -1,14 +1,15 @@
 import React, { useMemo } from 'react'
 
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Row, Col, CardHeader, Card, CardBody } from 'reactstrap'
+import { styled } from 'styled-components'
 import { LinkExternal } from 'src/components/Link/LinkExternal'
 
 import type { ClusterDatum } from 'src/io/getClusters'
 import { getMutationCounts, MutationCountsDatum, MutationCountsGeneRecord } from 'src/io/getMutationCounts'
 import { AminoacidMutationBadge } from 'src/components/Common/MutationBadge'
 import { TableSlim } from 'src/components/Common/TableSlim'
-import styled from 'styled-components'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
 
 const MutationCountsSummaryCardBody = styled(CardBody)`
   padding: 1rem;
@@ -62,19 +63,21 @@ export interface MutationCountsSummarySubTableProps {
 }
 
 export function MutationCountsSummarySubTable({ record, title }: MutationCountsSummarySubTableProps) {
+  const { t } = useTranslationSafe()
+
   return (
     <Table striped>
       <Caption>{title}</Caption>
       <thead>
         <tr>
-          <th className="text-center">{'Mutation'}</th>
-          <th className="text-center">{'Count'}</th>
-          <th className="text-center">{'Frequency'}</th>
+          <th className="text-center">{t('Mutation')}</th>
+          <th className="text-center">{t('Count')}</th>
+          <th className="text-center">{t('Frequency')}</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td className="font-weight-bold">{'Total'}</td>
+          <td className="font-weight-bold">{t('Total')}</td>
           <td className="font-weight-bold text-right">{record.total}</td>
           <td className="font-weight-bold text-right">{'100.00%'}</td>
         </tr>
@@ -87,7 +90,9 @@ export function MutationCountsSummarySubTable({ record, title }: MutationCountsS
 }
 
 export function useMutationCounts(clusterBuildName: string) {
-  return useQuery(['mutationCounts', clusterBuildName], async () => getMutationCounts(clusterBuildName), {
+  return useQuery({
+    queryKey: ['mutationCounts', clusterBuildName],
+    queryFn: async () => getMutationCounts(clusterBuildName),
     staleTime: Number.POSITIVE_INFINITY,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -101,45 +106,35 @@ export interface MutationCountsSummaryProps {
 }
 
 export function MutationCountsSummaryCard({ currentCluster }: MutationCountsSummaryProps) {
-  const { data, isError, error, isLoading } = useMutationCounts(currentCluster.build_name)
+  const { t } = useTranslationSafe()
 
-  if (!data) {
+  const { data } = useMutationCounts(currentCluster.build_name)
+  if (!data?.result) {
     return null
   }
-
-  const { S, others } = data
+  const { S, others } = data.result
 
   return (
     <Card>
       <CardHeader>
-        <span>{'Non-defining mutation counts (data from '}</span>
+        <span>{t('Non-defining mutation counts')}</span>
+        <span>{' ('}</span>
+        <span>{t('Data is from {{source}}', { source: '' })}</span>
         <span>
           <LinkExternal href="https://cov-spectrum.org/">{'CoV-Spectrum'}</LinkExternal>
         </span>
         <span>{')'}</span>
       </CardHeader>
       <MutationCountsSummaryCardBody>
-        <Row noGutters>
+        <Row className={'gx-0'}>
           <Col>
-            <Row noGutters>
+            <Row className={'gx-0'}>
               <Col className="d-flex mx-1 my-1 mb-auto">
-                <MutationCountsSummarySubTable title="Gene S" record={S} />
+                <MutationCountsSummarySubTable title={t('Gene S')} record={S} />
               </Col>
 
               <Col className="d-flex mx-1 my-1 mb-auto">
-                <MutationCountsSummarySubTable title="Other genes" record={others} />
-              </Col>
-            </Row>
-
-            <Row noGutters>
-              <Col>
-                {isLoading && <div className="mx-auto">{'Loading...'}</div>}
-                {isError && (
-                  <div className="mx-auto">
-                    <div>{`Mutation counts are not yet available`}</div>
-                    <div className="text-danger">{process.env.NODE_ENV === 'development' && formatError(error)}</div>
-                  </div>
-                )}
+                <MutationCountsSummarySubTable title={t('Other genes')} record={others} />
               </Col>
             </Row>
           </Col>

@@ -1,9 +1,10 @@
 import React, { PropsWithChildren } from 'react'
 
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 import { GoLinkExternal } from 'react-icons/go'
 
 import { LinkExternal } from 'src/components/Link/LinkExternal'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
 
 const ProposeChangesLink = styled(LinkExternal)`
   color: ${(props) => props.theme.gray500};
@@ -29,13 +30,14 @@ export interface LinkOpenInNewTabProps {
   text?: string
 }
 
-export function LinkOpenInNewTab({ href, text, children, ...restProps }: PropsWithChildren<LinkOpenInNewTabProps>) {
+export function LinkOpenInNewTab({ href, text }: PropsWithChildren<LinkOpenInNewTabProps>) {
+  const { t } = useTranslationSafe()
   return (
     <ProposeChangesLink href={href}>
       <ProposeChangesIcon>
         <GoLinkExternal />
       </ProposeChangesIcon>
-      <ProposeChangesText>{text ?? 'Propose changes to this section'}</ProposeChangesText>
+      <ProposeChangesText>{text ?? t('Propose changes to this section')}</ProposeChangesText>
     </ProposeChangesLink>
   )
 }

@@ -1,0 +1,89 @@
+# Build web app and deploy it
+name: web-staging
+
+on:
+  pull_request:
+    types: [ opened, synchronize ]
+
+  repository_dispatch:
+    types: web_staging
+
+  workflow_dispatch:
+
+  workflow_call:
+
+concurrency:
+  group: web-${{ github.workflow }}-${{ github.ref_type }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -euxo pipefail {0}
+
+env:
+  GITHUB_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+  AWS_MAX_ATTEMPTS: 10
+  PROD_ENABLE_TYPE_CHECKS: 0
+  VERBOSE: 1
+
+jobs:
+  build-web:
+    name: "build-web"
+    runs-on: ubuntu-22.04
+    environment:
+      name: "refs/heads/staging"
+
+    steps:
+      - name: "[init] Check disk space"
+        run: |
+          echo ""
+          df -Th | awk 'NR == 1; NR > 1 {print $0 | "sort -n"}'
+          echo ""
+          lsblk -o MOUNTPOINT,FSTYPE,FSSIZE,FSAVAIL,FSUSE%,TYPE,NAME,ROTA,SIZE,MODEL,UUID
+
+      - name: "[init] Checkout code"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          submodules: true
+
+      - name: "[build] Build app"
+        uses: ./.github/workflows/build_app
+        with:
+          deploy_environment: "staging"
+
+      - name: "[deployment] Install dependencies"
+        run: |
+          pushd /tmp >/dev/null
+            curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip -oqq awscliv2.zip
+            sudo ./aws/install --update
+          popd >/dev/null
+          aws --version
+
+      - name: "[deployment] Deploy app to aws"
+        uses: ./.github/workflows/deploy_app_to_aws
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+
+      - name: "[deployment] Sync acknowledgements (large static files) based on checksums"
+        uses: ./.github/workflows/sync_acknowledgements_checksum_based
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+
+      - name: "[deployment] Sync proteins (large static files)"
+        uses: ./.github/workflows/sync_proteins
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}

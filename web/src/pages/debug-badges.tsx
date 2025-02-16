@@ -1,24 +1,30 @@
 import React from 'react'
 
 import { Col, Row } from 'reactstrap'
+import { useRecoilValue } from 'recoil'
 import { Var, WhoBadge } from 'src/components/Common/MutationBadge'
 
 import { Layout } from 'src/components/Layout/Layout'
 import { LinkSmart } from 'src/components/Link/LinkSmart'
 
-import { getClusterNames, getClusterBuildNames, getClusterOldBuildNames } from 'src/io/getClusters'
 import { GREEK_ALPHABET } from 'src/names'
-
-const clusterNames = getClusterNames()
-const clusterBuildNames = getClusterBuildNames()
-const clusterOldBuildNames = getClusterOldBuildNames()
+import {
+  hasPageClusterBuildNamesSelector,
+  hasPageClusterOldBuildNamesSelector,
+  hasPageClusterNamesSelector,
+  noPageClusterNamesSelector,
+} from 'src/state/Clusters'
 
 const domain = process.env.DOMAIN ?? ''
 
 export default function DebugBadges() {
+  const clusterNames = useRecoilValue(hasPageClusterNamesSelector)
+  const noPageClusterNames = useRecoilValue(noPageClusterNamesSelector)
+  const clusterBuildNames = useRecoilValue(hasPageClusterBuildNamesSelector)
+  const clusterOldBuildNames = useRecoilValue(hasPageClusterOldBuildNamesSelector)
   return (
     <Layout>
-      <Row noGutters>
+      <Row className={'gx-0'}>
         <Col>
           {'Display names'}
           <ul>
@@ -58,8 +64,21 @@ export default function DebugBadges() {
           </ul>
         </Col>
       </Row>
-      <Row noGutters>
+      <Row>
         <Col>
+          {'No Page Display names'}
+          <ul>
+            {noPageClusterNames.map((name) => (
+              <li key={name}>
+                <Var name={name} />
+              </li>
+            ))}
+          </ul>
+        </Col>
+      </Row>
+      <Row className={'gx-0'}>
+        <Col>
+          {'WHO labels'}
           <ul>
             {Object.keys(GREEK_ALPHABET)
               .map((name) => name[0].toUpperCase() + name.slice(1))

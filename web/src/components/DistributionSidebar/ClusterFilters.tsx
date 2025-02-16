@@ -12,11 +12,12 @@ import {
   Row,
 } from 'reactstrap'
 
-import type { Cluster } from 'src/state/Clusters'
-import { getClusterColor } from 'src/io/getClusters'
+import { styled } from 'styled-components'
+import { useRecoilValue } from 'recoil'
+import { Cluster, getClusterColorsSelector } from 'src/state/Clusters'
 import { ColoredBox } from 'src/components/Common/ColoredBox'
 import { CardCollapsible } from 'src/components/Common/CardCollapsible'
-import styled from 'styled-components'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
 
 export const FormGroup = styled(FormGroupBase)`
   flex: 1 0 320px;
@@ -39,6 +40,7 @@ export interface ClusterFilterCheckboxProps {
 
 export function ClusterFilterCheckbox({ cluster, enabled, onFilterChange }: ClusterFilterCheckboxProps) {
   const onChange = useCallback(() => onFilterChange(cluster), [onFilterChange, cluster])
+  const getClusterColor = useRecoilValue(getClusterColorsSelector)
 
   return (
     <FormGroup key={cluster} check>
@@ -68,24 +70,26 @@ export function ClusterFilters({
   onFilterChange,
   setCollapsed,
 }: ClusterFiltersProps) {
+  const { t } = useTranslationSafe()
+
   return (
-    <CardCollapsible className="m-2" title={'Variants'} collapsed={collapsed} setCollapsed={setCollapsed}>
+    <CardCollapsible className="m-2" title={t('Variants')} collapsed={collapsed} setCollapsed={setCollapsed}>
       <CardBody>
         <Container fluid>
-          <Row noGutters>
+          <Row className={'gx-0'}>
             <Col className="d-flex">
               <FormGroup className="flex-grow-0 mx-auto">
                 <Button type="button" color="link" onClick={onFilterSelectAll}>
-                  {'Select all'}
+                  {t('Select all')}
                 </Button>
                 <Button type="button" color="link" onClick={onFilterDeselectAll}>
-                  {'Deselect all'}
+                  {t('Deselect all')}
                 </Button>
               </FormGroup>
             </Col>
           </Row>
 
-          <Row noGutters>
+          <Row className={'gx-0'}>
             <Col>
               <Form>
                 {clusters.map(({ cluster, enabled }) => (

@@ -1,55 +1,95 @@
-import { get } from 'lodash'
-import React, { useState, useMemo } from 'react'
+import get from 'lodash/get'
+import React, { useState, useMemo, useCallback } from 'react'
 import { Col, Row } from 'reactstrap'
-import { Cluster } from 'src/state/Clusters'
-
-import type { Continent, Country } from 'src/state/Places'
-import { sortClusters } from 'src/io/getClusters'
+import { SetterOrUpdater, useRecoilValue } from 'recoil'
+import { CountryFlagProps } from '../Common/CountryFlag'
 import { ClusterFilters } from './ClusterFilters'
 import { CountryFilters } from './CountryFilters'
+import { Cluster, clusterNamesSelector, disableAllClusters, enableAllClusters, toggleCluster } from 'src/state/Clusters'
 
-import { CountryFlagProps } from '../Common/CountryFlag'
+import {
+  Continent,
+  Country,
+  disableAllCountries,
+  enableAllCountries,
+  toggleContinent,
+  toggleCountry,
+} from 'src/state/Places'
+import { sortClustersByClusterNames } from 'src/io/getClusters'
 
 export interface DistributionSidebarProps {
   countries: Country[]
   continents: Continent[]
   clusters?: Cluster[]
+  setCountries: SetterOrUpdater<Country[]>
+  setContinents: SetterOrUpdater<Continent[]>
+  setClusters: SetterOrUpdater<Cluster[]>
   regionsTitle: string
   clustersCollapsedByDefault?: boolean
   countriesCollapsedByDefault?: boolean
   enabledFilters: string[]
   Icon?: React.ComponentType<CountryFlagProps>
-  onClusterFilterChange(cluster: string): void
-  onClusterFilterSelectAll(): void
-  onClusterFilterDeselectAll(): void
-  onCountryFilterChange(country: string): void
-  onRegionFilterChange(regionName: string): void
-  onCountryFilterSelectAll(): void
-  onCountryFilterDeselectAll(): void
 }
 
 export function DistributionSidebar({
   countries,
   continents,
   clusters,
+  setCountries,
+  setContinents,
+  setClusters,
   regionsTitle,
   clustersCollapsedByDefault = true,
   countriesCollapsedByDefault = true,
   enabledFilters,
   Icon,
-  onClusterFilterChange,
-  onClusterFilterSelectAll,
-  onClusterFilterDeselectAll,
-  onRegionFilterChange,
-  onCountryFilterChange,
-  onCountryFilterSelectAll,
-  onCountryFilterDeselectAll,
 }: DistributionSidebarProps) {
   const [clustersCollapsed, setClustersCollapsed] = useState(clustersCollapsedByDefault)
   const [countriesCollapsed, setCountriesCollapsed] = useState(countriesCollapsedByDefault)
-  const clustersSorted = useMemo(() => sortClusters(clusters ?? []), [clusters])
+  const clusterNames = useRecoilValue(clusterNamesSelector)
+  const clustersSorted = useMemo(
+    () => sortClustersByClusterNames(clusters ?? [], clusterNames),
+    [clusters, clusterNames],
+  )
 
-  const availableFilters: { [key: string]: React.ReactNode } = useMemo(
+  const handleClusterCheckedChange = useCallback(
+    (cluster: string) => {
+      setClusters((oldClusters) => toggleCluster(oldClusters, cluster))
+    },
+    [setClusters],
+  )
+
+  const handleClusterSelectAll = useCallback(() => {
+    setClusters((oldClusters) => enableAllClusters(oldClusters))
+  }, [setClusters])
+
+  const handleClusterDeselectAll = useCallback(() => {
+    setClusters((oldClusters) => disableAllClusters(oldClusters))
+  }, [setClusters])
+
+  const handleCountryCheckedChange = useCallback(
+    (countryName: string) => {
+      setCountries((oldCountries) => toggleCountry(oldCountries, countryName))
+    },
+    [setCountries],
+  )
+
+  const handleContinentCheckedChange = useCallback(
+    (continentName: string) => {
+      setContinents((oldContinents) => toggleContinent(oldContinents, continentName))
+    },
+    [setContinents],
+  )
+
+  const handleCountrySelectAll = useCallback(() => {
+    setCountries(enableAllCountries)
+  }, [setCountries])
+
+  const handleCountryDeselectAll = useCallback(() => {
+    setCountries(disableAllCountries)
+  }, [setCountries])
+
+  const availableFilters: Record<string, React.ReactNode> = useMemo(
     () => ({
       countries: (
         <CountryFilters
@@ -57,10 +97,10 @@ export function DistributionSidebar({
           countries={countries}
           continents={continents}
           regionsTitle={regionsTitle}
-          onFilterSelectRegion={onRegionFilterChange}
-          onFilterChange={onCountryFilterChange}
-          onFilterSelectAll={onCountryFilterSelectAll}
-          onFilterDeselectAll={onCountryFilterDeselectAll}
+          onFilterSelectRegion={handleContinentCheckedChange}
+          onFilterChange={handleCountryCheckedChange}
+          onFilterSelectAll={handleCountrySelectAll}
+          onFilterDeselectAll={handleCountryDeselectAll}
           collapsed={countriesCollapsed}
           setCollapsed={setCountriesCollapsed}
         />
@@ -73,10 +113,10 @@ export function DistributionSidebar({
           continents={continents}
           withIcons
           Icon={Icon}
-          onFilterChange={onCountryFilterChange}
-          onFilterSelectRegion={onRegionFilterChange}
-          onFilterSelectAll={onCountryFilterSelectAll}
-          onFilterDeselectAll={onCountryFilterDeselectAll}
+          onFilterChange={handleCountryCheckedChange}
+          onFilterSelectRegion={handleContinentCheckedChange}
+          onFilterSelectAll={handleCountrySelectAll}
+          onFilterDeselectAll={handleCountryDeselectAll}
           collapsed={countriesCollapsed}
           setCollapsed={setCountriesCollapsed}
         />
@@ -85,9 +125,9 @@ export function DistributionSidebar({
         <ClusterFilters
           key="cluster-filters"
           clusters={clustersSorted}
-          onFilterChange={onClusterFilterChange}
-          onFilterSelectAll={onClusterFilterSelectAll}
-          onFilterDeselectAll={onClusterFilterDeselectAll}
+          onFilterChange={handleClusterCheckedChange}
+          onFilterSelectAll={handleClusterSelectAll}
+          onFilterDeselectAll={handleClusterDeselectAll}
           collapsed={clustersCollapsed}
           setCollapsed={setClustersCollapsed}
         />
@@ -99,13 +139,13 @@ export function DistributionSidebar({
       clusters,
       clustersSorted,
       countriesCollapsed,
-      onClusterFilterChange,
-      onClusterFilterDeselectAll,
-      onClusterFilterSelectAll,
-      onCountryFilterChange,
-      onCountryFilterDeselectAll,
-      onCountryFilterSelectAll,
-      onRegionFilterChange,
+      handleClusterCheckedChange,
+      handleClusterDeselectAll,
+      handleClusterSelectAll,
+      handleCountryCheckedChange,
+      handleCountryDeselectAll,
+      handleCountrySelectAll,
+      handleContinentCheckedChange,
       regionsTitle,
       countries,
       continents,
@@ -113,7 +153,7 @@ export function DistributionSidebar({
   )
 
   return (
-    <Row noGutters>
+    <Row className={'gx-0'}>
       <Col>{enabledFilters.map((filterName) => get(availableFilters, filterName))}</Col>
     </Row>
   )

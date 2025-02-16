@@ -1,100 +1,44 @@
 /* eslint-disable camelcase */
-import copy from 'fast-copy'
 import { pickBy } from 'lodash'
-
+import { z } from 'zod'
 import type { Cluster } from 'src/state/Clusters'
 import type { Country } from 'src/state/Places'
-
-import perCountryDataJson from 'src/../data/perCountryData.json'
-
-export interface PerCountryDatum {
-  cluster_names: string[]
-  distributions: CountryDistribution[]
-  max_date: string
-  min_date: string
-  region: string
-  per_country_intro_content: string
-}
-
-export interface PerCountryDataRaw {
-  regions: PerCountryDatum[]
-}
-
-export interface CountryDistributionDatum {
-  week: string
-  total_sequences: number
-  cluster_counts: {
-    [key: string]: number | undefined
-  }
-}
+import { FETCHER } from 'src/hooks/useAxiosQuery'
 
 export interface CountryDistribution {
   country: string
   distribution: CountryDistributionDatum[]
 }
 
-export interface ClusterState {
-  [key: string]: { enabled: boolean }
-}
+const countryDistributionDatumSchema = z.object({
+  week: z.string(),
+  total_sequences: z.number(),
+  cluster_counts: z.record(z.string(), z.number().optional()),
+})
 
-export interface PerCountryData {
-  clusterNames: string[]
-  clusters: Cluster[]
-  countryDistributions: CountryDistribution[]
-  perCountryIntroContent: string
-}
+const countryDistributionSchema = z.object({
+  country: z.string(),
+  distribution: countryDistributionDatumSchema.array(),
+})
 
-export function getPerCountryDataRaw(): PerCountryDataRaw {
-  return perCountryDataJson as PerCountryDataRaw
-}
+const perCountryDatumSchema = z.object({
+  cluster_names: z.string().array(),
+  distributions: countryDistributionSchema.array(),
+  max_date: z.string(),
+  min_date: z.string(),
+  region: z.string(),
+  per_country_intro_content: z.string(),
+})
 
-export function getPerCountryData(regionName: string): PerCountryData {
-  const allData = getPerCountryDataRaw()
+const perCountryDataRawSchema = z.object({
+  regions: perCountryDatumSchema.array(),
+})
 
-  const perCountryData: PerCountryDatum | undefined = allData.regions.find(
-    (candidate) => candidate.region === regionName,
-  )
-  if (!perCountryData) {
-    throw new Error(`Region data not found for region: ${regionName}`)
-  }
+export type PerCountryDataRaw = z.infer<typeof perCountryDataRawSchema>
+export type CountryDistributionDatum = z.infer<typeof countryDistributionDatumSchema>
 
-  const clusterNames = copy(perCountryData.cluster_names).sort()
-  const clusters = clusterNames.map((cluster) => ({ cluster, enabled: true }))
-
-  const countryDistributions = perCountryData.distributions
-
-  const perCountryIntroContent = perCountryData.per_country_intro_content
-
-  return {
-    clusterNames,
-    clusters,
-    countryDistributions,
-    perCountryIntroContent,
-  }
-}
-
-export function getPerCountryIntroContentFilename(region: string): string {
-  const allData = getPerCountryDataRaw()
-  const perCountryData: PerCountryDatum | undefined = allData.regions.find((candidate) => candidate.region === region)
-  if (!perCountryData) {
-    throw new Error(`Region data not found for region: ${region}`)
-  }
-  return perCountryData.per_country_intro_content
-}
-
-export function getRegions() {
-  const allData = getPerCountryDataRaw()
-  const regionNames = allData.regions.map(({ region }) => region)
-  const regionsHaveData = allData.regions.map(
-    ({ cluster_names, distributions }) => cluster_names.length > 0 && distributions.length > 0,
-  )
-  const defaultRegionName = regionNames[0]
-
-  return {
-    regionNames,
-    regionsHaveData,
-    defaultRegionName,
-  }
+export async function fetchPerCountryDataRaw(): Promise<PerCountryDataRaw> {
+  return await FETCHER.validatedFetch('/data/perCountryData.json', perCountryDataRawSchema)
 }
 
 export function filterCountries(countries: Country[], countryDistributions: CountryDistribution[]) {

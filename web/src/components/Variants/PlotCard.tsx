@@ -1,15 +1,15 @@
 import React, { useMemo } from 'react'
-import { getClusterDistribution, getCountryNames } from 'src/io/getPerClusterData'
-
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 import { GoGraph } from 'react-icons/go'
 import { Card, CardBody, Col, Row } from 'reactstrap'
+import { useRecoilValue } from 'recoil'
+import { Link } from '../Link/Link'
 
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
 import { theme } from 'src/theme'
 import { ClusterDistributionPlot } from 'src/components/ClusterDistribution/ClusterDistributionPlot'
 import { ClusterDatum } from 'src/io/getClusters'
-
-import { Link } from '../Link/Link'
+import { perClusterDataCountryNamesSelector, perClusterDataDistributionSelector } from 'src/state/PerClusterData'
 
 const PlotCardTitleIcon = styled(GoGraph)`
   margin: auto 5px;
@@ -32,13 +32,17 @@ export interface PlotCardProps {
 }
 
 export function PlotCardTitle({ cluster }: PlotCardProps) {
+  const { t } = useTranslationSafe()
+
   return (
     <span className="d-flex w-100">
       <PlotCardTitleIcon />
-      <PlotCardHeading>{`Distribution of ${cluster.display_name} per country`}</PlotCardHeading>
-      <span className="ml-auto">
+      <PlotCardHeading>
+        {t('Distribution of {{variant}} per country', { variant: cluster.display_name })}
+      </PlotCardHeading>
+      <span className="ms-auto">
         <Link href="/per-variant" color={theme.link.dim.color}>
-          {'Compare'}
+          {t('Compare')}
         </Link>
       </span>
     </span>
@@ -47,17 +51,14 @@ export function PlotCardTitle({ cluster }: PlotCardProps) {
 
 export function PlotCard({ cluster }: PlotCardProps) {
   const title = useMemo(() => <PlotCardTitle cluster={cluster} />, [cluster])
-  const clusterDistribution = useMemo(
-    () => getClusterDistribution(cluster.display_name).distribution,
-    [cluster.display_name],
-  )
-  const countryNames = useMemo(() => getCountryNames(), [])
+  const clusterDistribution = useRecoilValue(perClusterDataDistributionSelector(cluster.display_name))
+  const countryNames = useRecoilValue(perClusterDataCountryNamesSelector)
 
   return (
     <Card>
       <CardBody>{title}</CardBody>
       <PlotCardBody>
-        <Row noGutters>
+        <Row className={'gx-0'}>
           <Col>
             <ClusterDistributionPlot distribution={clusterDistribution} country_names={countryNames} />
           </Col>

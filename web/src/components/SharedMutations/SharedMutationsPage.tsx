@@ -1,14 +1,17 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 
 import { Col, Container, Row } from 'reactstrap'
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 
+import { ErrorBoundary } from 'react-error-boundary'
+import { PageHeading } from '../Common/PageHeading'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
+import { MdxContent } from 'src/i18n/getMdxContent'
 import { Editable, CenteredEditable } from 'src/components/Common/Editable'
 import { Layout } from 'src/components/Layout/Layout'
-
-import SharedMutationsIntro from '../../../../content/SharedMutations.md'
-import { SharedMutations } from './SharedMutations'
-import { PageHeading } from '../Common/PageHeading'
+import { LOADING } from 'src/components/Loading/Loading'
+import { FetchError } from 'src/components/Error/FetchError'
+import { SharedMutationsTable } from 'src/components/SharedMutations/SharedMutationsTable'
 
 export const SharedMutationsPageContainer = styled(Container)`
   max-width: 1200px;
@@ -25,28 +28,34 @@ export const SharedMutationsWrapperInner = styled.div`
 `
 
 export function SharedMutationsPage() {
+  const { t } = useTranslationSafe()
+
   return (
     <Layout>
       <SharedMutationsPageContainer>
-        <Row noGutters>
+        <Row className={'gx-0'}>
           <Col>
-            <PageHeading>{'Shared mutations'}</PageHeading>
+            <PageHeading>{t('Shared mutations')}</PageHeading>
           </Col>
         </Row>
 
-        <Row noGutters>
+        <Row className={'gx-0'}>
           <Col>
             <CenteredEditable githubUrl="blob/master/content/SharedMutations.md">
-              <SharedMutationsIntro />
+              <MdxContent filepath="SharedMutations.md" />
             </CenteredEditable>
           </Col>
         </Row>
 
-        <Row noGutters>
+        <Row className={'gx-0'}>
           <Col className="pb-10">
-            <Editable githubUrl="blob/master/scripts" text={'View data generation scripts'}>
+            <Editable githubUrl="blob/master/scripts" text={t('View data generation scripts')}>
               <SharedMutationsWrapper>
-                <SharedMutations />
+                <ErrorBoundary FallbackComponent={FetchError}>
+                  <Suspense fallback={LOADING}>
+                    <SharedMutationsTable />
+                  </Suspense>
+                </ErrorBoundary>
               </SharedMutationsWrapper>
             </Editable>
           </Col>

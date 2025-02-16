@@ -1,30 +1,27 @@
 import React from 'react'
-
 import { Col, Container, Row } from 'reactstrap'
+import { MdxContent } from 'src/i18n/getMdxContent'
 import { CenteredEditable } from 'src/components/Common/Editable'
 import { PageHeading } from 'src/components/Common/PageHeading'
 import { Layout } from 'src/components/Layout/Layout'
-import { useRouter } from "next/router";
-import Faq from '../../../../content/Faq.md'
-import Faq_zh from '../../../../content/Faq_zh-CN.md'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
 
 export function FaqPage() {
-  const { locale} = useRouter();
+  const { t } = useTranslationSafe()
+
   return (
     <Layout>
       <Container>
-        <Row noGutters>
+        <Row className={'gx-0'}>
           <Col>
-            <PageHeading>{'Frequently asked questions'}</PageHeading>
+            <PageHeading>{t('Frequently asked questions')}</PageHeading>
           </Col>
         </Row>
 
-        <Row noGutters>
+        <Row className={'gx-0'}>
           <Col>
             <CenteredEditable githubUrl="blob/master/content/Faq.md">
-            {
-                locale== "zh-CN"? <Faq_zh />:<Faq />
-            }
+              <MdxContent filepath="Faq.md" />
             </CenteredEditable>
           </Col>
         </Row>

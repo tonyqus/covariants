@@ -1,26 +1,18 @@
-import { get } from 'lodash'
+import { z } from 'zod'
+import { FETCHER } from 'src/hooks/useAxiosQuery'
 
-import countriesToPlot from 'src/../data/countriesToPlot.json'
-import countryStyles from 'src/../data/countryStyles.json'
+const countriesToPlotSchema = z.record(z.string(), z.literal('True').or(z.literal('False')))
 
-import { lineStyleToStrokeDashArray } from 'src/helpers/lineStyleToStrokeDashArray'
+export type CountriesToPlot = Record<string, boolean>
 
-export function getCountryStyle(country: string) {
-  return get<Record<string, { c: string; ls: string }>, string>(countryStyles, country) ?? { c: '#555555', ls: '-' }
+export async function fetchShouldPlotCountry(): Promise<CountriesToPlot> {
+  const countriesRaw = await FETCHER.validatedFetch('/data/countriesToPlot.json', countriesToPlotSchema)
+  const countries = Object.entries(countriesRaw).map(([country, shouldPlot]) => [country, shouldPlot === 'True'])
+  return Object.fromEntries(countries) as CountriesToPlot
 }
 
-export function getCountryColor(country: string) {
-  return getCountryStyle(country).c
-}
+const countryStylesRawSchema = z.record(z.string(), z.object({ c: z.string(), ls: z.string() }))
 
-export function getCountryLineStyle(country: string) {
-  return getCountryStyle(country).ls
-}
-
-export function getCountryStrokeDashArray(country: string) {
-  return lineStyleToStrokeDashArray(getCountryLineStyle(country))
-}
-
-export function shouldPlotCountry(country: string): boolean {
-  return get(countriesToPlot, country, 'False') === 'True'
+export async function fetchCountryStyles() {
+  return await FETCHER.validatedFetch('/data/countryStyles.json', countryStylesRawSchema)
 }

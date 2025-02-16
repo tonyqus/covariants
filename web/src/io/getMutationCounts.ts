@@ -1,6 +1,6 @@
+import { mapValues, sortBy } from 'lodash'
 import type { Mutation } from 'src/types'
 import { parseAminoacidMutation } from 'src/components/Common/parseAminoacidMutation'
-import { mapValues, sortBy } from 'lodash'
 
 export interface MutationCountsDatum {
   mut: Mutation
@@ -47,8 +47,13 @@ export function parseMutationCounts(data: MutationCountsJsonGeneRecord) {
   return { ...data, counts }
 }
 
-export async function getMutationCounts(clusterBuildName: string): Promise<MutationCountsData> {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,unicorn/no-await-expression-member
-  const data = (await import(`../../data/mutationCounts/${clusterBuildName}.json`)).default as MutationCountsJson
-  return mapValues(data, (datum) => parseMutationCounts(datum))
+export async function getMutationCounts(clusterBuildName: string): Promise<{ result: MutationCountsData | undefined }> {
+  try {
+    const data = (await import(`../../public/data/mutationCounts/${clusterBuildName}.json`))
+      .default as MutationCountsJson // eslint-disable-line unicorn/no-await-expression-member, @typescript-eslint/no-unsafe-member-access
+    const result = mapValues(data, (datum) => parseMutationCounts(datum))
+    return { result }
+  } catch {
+    return { result: undefined }
+  }
 }

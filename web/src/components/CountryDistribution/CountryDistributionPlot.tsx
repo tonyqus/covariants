@@ -4,14 +4,16 @@ import React, { useMemo } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { DateTime } from 'luxon'
 
+import { useRecoilValue } from 'recoil'
+import { CountryDistributionPlotTooltip } from './CountryDistributionPlotTooltip'
 import type { CountryDistributionDatum } from 'src/io/getPerCountryData'
 import { theme } from 'src/theme'
-import { ticks, timeDomain } from 'src/io/getParams'
-import { CLUSTER_NAME_OTHERS, getClusterColor } from 'src/io/getClusters'
+import { CLUSTER_NAME_OTHERS } from 'src/io/getClusters'
 import { formatDateHumanely, formatProportion } from 'src/helpers/format'
 import { adjustTicks } from 'src/helpers/adjustTicks'
 import { ChartContainer } from 'src/components/Common/ChartContainer'
-import { CountryDistributionPlotTooltip } from './CountryDistributionPlotTooltip'
+import { ticksSelector, timeDomainSelector } from 'src/state/Params'
+import { getClusterColorsSelector } from 'src/state/Clusters'
 
 const allowEscapeViewBox = { x: false, y: true }
 
@@ -23,6 +25,10 @@ export interface AreaPlotProps {
 }
 
 function AreaPlot({ width, height, cluster_names, distribution }: AreaPlotProps) {
+  const getClusterColor = useRecoilValue(getClusterColorsSelector)
+  const ticks = useRecoilValue(ticksSelector)
+  const timeDomain = useRecoilValue(timeDomainSelector)
+
   const data = useMemo(
     () =>
       distribution.map(({ week, total_sequences, cluster_counts }) => {
@@ -41,7 +47,7 @@ function AreaPlot({ width, height, cluster_names, distribution }: AreaPlotProps)
     const domainX = [timeDomain[0], timeDomain[1]]
     const domainY = [0, 1]
     return { adjustedTicks, domainX, domainY }
-  }, [width])
+  }, [width, ticks, timeDomain])
 
   return (
     <AreaChart margin={theme.plot.margin} data={data} stackOffset="expand" width={width} height={height}>

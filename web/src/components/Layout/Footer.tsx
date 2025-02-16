@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { Col, Container, Row } from 'reactstrap'
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 
 import { PROJECT_NAME, COMPANY_NAME } from 'src/constants'
 import { SharingPanel } from 'src/components/Common/SharingPanel'
@@ -11,6 +11,7 @@ import { PoweredBy } from 'src/components/Common/PoweredBy'
 
 import { getCopyrightYearRange } from 'src/helpers/getCopyrightYearRange'
 import { getVersionString } from 'src/helpers/getVersionString'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
 
 const FooterContainer = styled(Container)`
   padding: 7px 10px;
@@ -46,36 +47,38 @@ const VersionText = styled.div`
 `
 
 export function FooterContent() {
+  const { t } = useTranslationSafe()
+
   const copyrightYearRange = getCopyrightYearRange()
 
   return (
     <FooterContainer fluid tag="footer">
-      <Row noGutters>
+      <Row className={'gx-0'}>
         <Col>
           <SharingPanel />
         </Col>
       </Row>
 
-      <Row noGutters>
+      <Row className={'gx-0'}>
         <Col>
           <TeamCredits />
         </Col>
       </Row>
 
-      <Row noGutters>
+      <Row className={'gx-0'}>
         <Col>
           <PoweredBy />
         </Col>
       </Row>
 
-      <Row noGutters>
+      <Row className={'gx-0'}>
         <Col className="d-flex p-0 flex-wrap">
           <CopyrightText>{`${PROJECT_NAME} (c) ${copyrightYearRange} ${COMPANY_NAME}`}</CopyrightText>
 
           <GisaidTacText>
-            <span>{'GISAID data provided on this website are subject to '}</span>
+            <span>{t('GISAID data provided on this website are subject to ')}</span>
             <LinkExternal href="https://www.gisaid.org/registration/terms-of-use/" icon={null}>
-              {'GISAID Terms and Conditions'}
+              {t('GISAID Terms and Conditions')}
             </LinkExternal>
           </GisaidTacText>
 

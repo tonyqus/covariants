@@ -1,10 +1,11 @@
 import React from 'react'
 
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 
-import type { ClusterDatum } from 'src/io/getClusters'
-import { AminoacidMutationBadge, NucleotideMutationBadge } from 'src/components/Common/MutationBadge'
 import { Row, Col } from 'reactstrap'
+import type { ClusterDatum } from 'src/io/getClusters'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
+import { AminoacidMutationBadge, NucleotideMutationBadge } from 'src/components/Common/MutationBadge'
 
 const Container = styled.div`
   width: 100%;
@@ -33,7 +34,8 @@ const H4 = styled.h4`
 `
 
 export function NoMutations() {
-  return <p>{'None. See notes below'}</p>
+  const { t } = useTranslationSafe()
+  return <p>{t('None. See notes below')}</p>
 }
 
 export interface DefiningMutationsProps {
@@ -44,17 +46,19 @@ export function hasDefiningMutations(cluster: ClusterDatum) {
   // prettier-ignore
   const hasNonsynonymous =
     cluster.mutations?.nonsynonymous?.length !== undefined &&
-    cluster.mutations?.nonsynonymous?.length > 0
+    cluster.mutations?.nonsynonymous?.length > 0;
 
   // prettier-ignore
   const hasSynonymous =
     cluster.mutations?.synonymous?.length !== undefined &&
-    cluster.mutations?.synonymous?.length > 0
+    cluster.mutations?.synonymous?.length > 0;
 
   return hasNonsynonymous || hasSynonymous
 }
 
 export function DefiningMutations({ cluster }: DefiningMutationsProps) {
+  const { t } = useTranslationSafe()
+
   if (!cluster?.mutations) {
     return null
   }
@@ -64,15 +68,15 @@ export function DefiningMutations({ cluster }: DefiningMutationsProps) {
 
   return (
     <Container>
-      <Row noGutters>
+      <Row className={'gx-0'}>
         <Col>
-          <H3>{'Defining mutations'}</H3>
+          <H3>{t('Defining mutations')}</H3>
         </Col>
       </Row>
 
-      <Row noGutters>
+      <Row className={'gx-0'}>
         <Col className="my-2">
-          <H4>{'Nonsynonymous'}</H4>
+          <H4>{t('Nonsynonymous')}</H4>
           {hasNonsynonymous ? (
             <Ul>
               {cluster.mutations?.nonsynonymous?.map((mutation) => (
@@ -87,7 +91,7 @@ export function DefiningMutations({ cluster }: DefiningMutationsProps) {
         </Col>
 
         <Col className="my-2">
-          <H4>{'Synonymous'}</H4>
+          <H4>{t('Synonymous')}</H4>
           {hasSynonymous ? (
             <Ul>
               {cluster.mutations?.synonymous?.map((mutation) => (

@@ -1,13 +1,13 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import { Card, CardBody, CardHeader, Row } from 'reactstrap'
+import { styled } from 'styled-components'
+import get from 'lodash/get'
+import { useRecoilValue } from 'recoil'
 import { ClusterButtonGroup } from 'src/components/ClusterButtonPanel/ClusterButtonGroup'
-
-import { ClusterDatum, getClusters, getClustersGrouped } from 'src/io/getClusters'
-import styled from 'styled-components'
-
-const clusters = getClusters().filter((cluster) => !cluster.has_no_page)
-const clustersGrouped = getClustersGrouped(clusters)
+import { ClusterDatum, getClustersGrouped } from 'src/io/getClusters'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
+import { hasPageClustersSelector } from 'src/state/Clusters'
 
 const ClustersRow = styled(Row)`
   display: flex;
@@ -46,16 +46,31 @@ export interface ClusterPanelProps {
 }
 
 export function ClusterButtonPanel({ currentCluster, className }: ClusterPanelProps) {
+  const { t } = useTranslationSafe()
+  const clusters = useRecoilValue(hasPageClustersSelector)
+  const clustersGrouped = useMemo(() => getClustersGrouped(clusters), [clusters])
+
   return (
-    <ClustersRow noGutters className={className}>
-      {Object.entries(clustersGrouped).map(([clusterType, clusterGroup]) => (
-        <ClusterGroupCard key={clusterType}>
-          <ClusterGroupHeader>{clusterType}</ClusterGroupHeader>
-          <ClusterGroupBody>
-            <ClusterButtonGroup clusterGroup={clusterGroup} currentCluster={currentCluster} />
-          </ClusterGroupBody>
-        </ClusterGroupCard>
-      ))}
+    <ClustersRow className={`gx-0 ${className}`}>
+      {Object.entries(clustersGrouped).map(([clusterType, clusterGroup]) => {
+        const clusterTypeHeading = get(
+          {
+            variant: t('Variants'),
+            mutation: t('Mutations'),
+          },
+          clusterType,
+          'Other',
+        ) as string
+
+        return (
+          <ClusterGroupCard key={clusterType}>
+            <ClusterGroupHeader>{clusterTypeHeading.toUpperCase()}</ClusterGroupHeader>
+            <ClusterGroupBody>
+              <ClusterButtonGroup clusterGroup={clusterGroup} currentCluster={currentCluster} />
+            </ClusterGroupBody>
+          </ClusterGroupCard>
+        )
+      })}
     </ClustersRow>
   )
 }

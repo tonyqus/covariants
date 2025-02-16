@@ -1,18 +1,19 @@
 /* eslint-disable camelcase */
 import React, { useMemo } from 'react'
 
-import { get } from 'lodash'
+import get from 'lodash/get'
 import { DateTime } from 'luxon'
 import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTheme } from 'styled-components'
 
-import { ticks, timeDomain } from 'src/io/getParams'
-import { getCountryColor, getCountryStrokeDashArray } from 'src/io/getCountryColor'
+import { useRecoilValue } from 'recoil'
 import { formatDateHumanely, formatProportion } from 'src/helpers/format'
 import { adjustTicks } from 'src/helpers/adjustTicks'
 import type { ClusterDistributionDatum } from 'src/io/getPerClusterData'
 import { ClusterDistributionPlotTooltip } from 'src/components/ClusterDistribution/ClusterDistributionPlotTooltip'
 import { ChartContainer } from 'src/components/Common/ChartContainer'
+import { ticksSelector, timeDomainSelector } from 'src/state/Params'
+import { getCountryStylesSelector } from 'src/state/CountryStyles'
 
 const getValueOrig = (country: string) => (value: ClusterDistributionDatum) => {
   const orig = get(value.orig, country, false)
@@ -43,6 +44,10 @@ interface LinePlotProps {
 
 function LinePlot({ width, height, country_names, distribution }: LinePlotProps) {
   const theme = useTheme()
+  const getCountryStyle = useRecoilValue(getCountryStylesSelector)
+
+  const ticks = useRecoilValue(ticksSelector)
+  const timeDomain = useRecoilValue(timeDomainSelector)
 
   const data = useMemo(
     () =>
@@ -58,7 +63,7 @@ function LinePlot({ width, height, country_names, distribution }: LinePlotProps)
     const domainX = [adjustedTicks[0], timeDomain[1]]
     const domainY = [0, 1]
     return { adjustedTicks, domainX, domainY }
-  }, [theme.plot.tickWidthMin, width])
+  }, [theme.plot.tickWidthMin, width, ticks, timeDomain])
 
   const lines = useMemo(() => {
     const linesOrig = country_names.map((country) => (
@@ -67,9 +72,9 @@ function LinePlot({ width, height, country_names, distribution }: LinePlotProps)
         type="monotone"
         name={country}
         dataKey={getValueOrig(country)}
-        stroke={getCountryColor(country)}
+        stroke={getCountryStyle(country).color}
         strokeWidth={2}
-        strokeDasharray={getCountryStrokeDashArray(country)}
+        strokeDasharray={getCountryStyle(country).strokeDashArray}
         dot={false}
         isAnimationActive={false}
       />
@@ -81,7 +86,7 @@ function LinePlot({ width, height, country_names, distribution }: LinePlotProps)
         type="monotone"
         name={country}
         dataKey={getValueInterp(country)}
-        stroke={getCountryColor(country)}
+        stroke={getCountryStyle(country).color}
         strokeWidth={1.2}
         strokeDasharray="1 2"
         dot={false}
@@ -90,7 +95,7 @@ function LinePlot({ width, height, country_names, distribution }: LinePlotProps)
     ))
 
     return [...linesOrig, linesInterp]
-  }, [country_names])
+  }, [country_names, getCountryStyle])
 
   return (
     <LineChart width={width} height={height} margin={theme.plot.margin} data={data}>

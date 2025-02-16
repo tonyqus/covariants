@@ -25,7 +25,7 @@ tables_path = "../covariants/cluster_tables/"
 overall_tables_file = "../covariants/cluster_tables/all_tables.tsv"
 acknowledgement_folder = "../covariants/acknowledgements/"
 acknowledgement_folder_new = "../covariants/web/public/acknowledgements/"
-web_data_folder = "../covariants/web/data/"
+web_data_folder = "../covariants/web/public/data/"
 # This assumes that `covariants` sites next to `ncov`
 # Otherwise, modify the paths above to put the files wherever you like.
 # (Alternatively just create a folder structure to mirror the above)
@@ -241,6 +241,20 @@ if dated_limit:
 input_meta = "data/metadata.tsv"
 cols = ['strain', 'date', 'division', 'host', 'substitutions', 'deletions', 'Nextstrain_clade', 'country', 'gisaid_epi_isl', 'coverage', 'QC_overall_status', 'Nextclade_pango']
 
+# Set a list of clades that are not yet in CoV, but are in Nextstrain - these need renaming to be part of their 'old' parent
+# until the clades can be added
+new_clades_to_rename = { #"24D (Omicron)": "21L (Omicron)",
+#"24E (Omicron)" : "24C (Omicron)",
+#"24F (Omicron)" : "24A (Omicron)",
+#"24G (Omicron)" : "24B (Omicron)",
+#"24H (Omicron)" : "24A (Omicron)",
+#"24I (Omicron)" : "24A (Omicron)"
+} #should be in format of Nexttrain_clade or column used to decide clade (Currently "23A (Omicron)", example entry: "24A (Omicron)": "23I (Omicron)")
+if new_clades_to_rename:
+    print("\n!!!!!!!!!!!!!!!!!!")
+    print("There are currently clades that will be renamed!!:")
+    print(new_clades_to_rename)
+
 # Traverse metadata once to count lines and collect Nextstrain_clades
 print("\nDoing first metadata pass...")
 Nextstrain_clades = []
@@ -381,6 +395,7 @@ print_lines = sorted([int(n_total/20*i) + 1 for i in range(1,20)]) # Print progr
 
 print("\nReading and cleaning up the metadata line-by-line...\n")
 n = 0
+noQC = 0
 with open(input_meta) as f:
     header = f.readline().split("\t")
     indices = {c:header.index(c) for c in cols}
@@ -420,7 +435,10 @@ with open(input_meta) as f:
         if l[indices['strain']] in bad_seqs and l[indices['date']] == bad_seqs[l[indices['strain']]]:
             continue
 
-        # Keep only if at least 90% coverage
+        # Keep only if at least 90% coverage -- exclude if no coverage info
+        if l[indices['coverage']] == "?":
+            noQC += 1
+            continue
         if float(l[indices['coverage']]) < 0.9:
             continue
 
@@ -428,6 +446,9 @@ with open(input_meta) as f:
         # As of 28 Oct 22 - process recombinants so we can start including them as designated variants
         #if clade == "recombinant":
         #    continue
+        # as of 7 Dec 2023 - if clade is in list of new clades that need renaming, replace clade
+        if clade in new_clades_to_rename:
+            clade = new_clades_to_rename[clade]
 
         pango = l[indices['Nextclade_pango']]
 
@@ -623,6 +644,7 @@ with open(input_meta) as f:
 print("100% complete!")
 t1 = time.time()
 print(f"Collecting all data took {round((t1-t0)/60,1)} min to run.\n")
+print(f"There are {noQC} without QC information.\n")
 
 ##################################
 ##################################
@@ -749,7 +771,7 @@ if print_acks and "all" in clus_answer:
                 json.dump(ch, fh, indent=2, sort_keys=True)
 
 print("\nCollect countries above cutoff_num_seqs (in at least one cluster)...")
-cutoff_num_seqs = 2000
+cutoff_num_seqs = 2700
 countries_to_plot = []
 for clus in clus_data_all:
     for country in clus_data_all[clus]["summary"]:
@@ -774,6 +796,7 @@ ndone = 0
 for clus in clus_data_all:
     print(f"Process cluster {clus}: number {ndone + 1} of {len(clus_to_run)}")
     total_data = pd.DataFrame(total_counts_countries)
+    #import ipdb; ipdb.set_trace()
     cluster_data = pd.DataFrame(clus_data_all[clus]["cluster_counts"]).sort_index()
     clus_data_all[clus]["non_zero_counts"] = {}
 

@@ -12,10 +12,11 @@ import {
   ModalHeader as ReactstrapModalHeader,
   Row,
 } from 'reactstrap'
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 
-import { LinkExternal } from 'src/components/Link/LinkExternal'
 import Changelog from '../../../../CHANGELOG.md'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
+import { LinkExternal } from 'src/components/Link/LinkExternal'
 
 export const ButtonOk = styled(Button)<ButtonProps>`
   width: 100px;
@@ -87,7 +88,11 @@ export const ModalBody = styled(ReactstrapModalBody)`
   background-color: #ffffff;
   background-repeat: no-repeat;
   background-attachment: local, local, scroll, scroll;
-  background-size: 100% 24px, 100% 24px, 100% 8px, 100% 8px;
+  background-size:
+    100% 24px,
+    100% 24px,
+    100% 8px,
+    100% 8px;
 
   h1:first-child,
   h2:first-child {
@@ -197,6 +202,8 @@ const components = {
 }
 
 export function ChangelogButton({ children, ...props }: PropsWithChildren<ButtonProps>) {
+  const { t } = useTranslationSafe()
+
   const [showChangelog, setShowChangelog] = useState(false)
 
   const toggleOpen = useCallback(() => {
@@ -211,8 +218,8 @@ export function ChangelogButton({ children, ...props }: PropsWithChildren<Button
     setShowChangelog(false)
   }, [])
 
-  const text = 'Recent updates'
-  const closeText = 'Close this window'
+  const text = t('Recent updates')
+  const closeText = t('Close this window')
 
   return (
     <>
@@ -233,9 +240,9 @@ export function ChangelogButton({ children, ...props }: PropsWithChildren<Button
 
         <ModalFooter>
           <Container fluid>
-            <Row noGutters className="my-2">
+            <Row className="my-2 gx-0">
               <Col className="d-flex w-100">
-                <ButtonOk className="ml-auto" type="button" color="success" onClick={close} title={closeText}>
+                <ButtonOk className="ms-auto" type="button" color="success" onClick={close} title={closeText}>
                   {'OK'}
                 </ButtonOk>
               </Col>

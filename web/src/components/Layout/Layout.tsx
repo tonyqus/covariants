@@ -1,15 +1,17 @@
-import React, { PropsWithChildren } from 'react'
-import { ChangelogButton } from 'src/components/Common/ChangelogButton'
-
-import styled from 'styled-components'
+import React, { PropsWithChildren, Suspense } from 'react'
+import { styled } from 'styled-components'
 import { Container as ContainerBase, Row, Col } from 'reactstrap'
-
-import GisaidLogoBase from 'src/assets/images/GISAID_logo.svg'
-
-import { LinkExternal } from 'src/components/Link/LinkExternal'
+import Image from 'next/image'
+import { ErrorBoundary } from 'react-error-boundary'
+import { LastUpdated } from '../Common/LastUpdated'
 import { NavigationBar } from './NavigationBar'
 import { FooterContent } from './Footer'
-import { LastUpdated } from '../Common/LastUpdated'
+import GisaidLogoPNG from 'src/assets/images/GISAID_logo.png'
+import { ChristmasLightRope, Santa, Snowfall } from 'src/components/Common/Christmas'
+import { ChangelogButton } from 'src/components/Common/ChangelogButton'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
+import { LinkExternal } from 'src/components/Link/LinkExternal'
+import { FetchError } from 'src/components/Error/FetchError'
 
 const Container = styled(ContainerBase)`
   min-height: 100%;
@@ -59,49 +61,55 @@ const GisaidText = styled.small`
   font-size: 0.9rem;
 `
 
-const GisaidLogo = styled(GisaidLogoBase)`
-  margin-bottom: 4px;
-`
-
 export interface LayoutProps {
   wide?: boolean
 }
 
 export function Layout({ children }: PropsWithChildren<LayoutProps>) {
+  const { t } = useTranslationSafe()
+
   return (
     <Container fluid>
-      <HeaderRow noGutters>
+      <HeaderRow className={'gx-0'}>
         <HeaderCol>
           <NavigationBar />
+          <ChristmasLightRope />
         </HeaderCol>
       </HeaderRow>
 
-      <Row noGutters className="ml-3 mt-n1 d-none d-md-block">
+      <Row className="ms-3 mt-2 d-none d-md-block gx-0">
         <Col className="d-flex">
-          <GisaidText className="d-flex mr-auto">
-            <span className="mr-1">{'Enabled by data from '}</span>
-            <LinkExternal href="https://www.gisaid.org/" icon={null}>
-              <GisaidLogo height={20} />
+          <GisaidText className="d-flex me-auto">
+            <span className="me-1 align-self-center">{t('Enabled by data from {{ gisaid }}', { gisaid: '' })}</span>
+            <LinkExternal className="align-self-center" href="https://www.gisaid.org/" icon={null}>
+              <Image src={GisaidLogoPNG} alt="GISAID" height={27} width={73} />
             </LinkExternal>
           </GisaidText>
 
-          <ChangelogButton className="d-flex ml-auto">
-            <LastUpdated className="d-flex ml-auto" />
+          <ChangelogButton className="d-flex ms-auto">
+            <ErrorBoundary FallbackComponent={FetchError}>
+              <Suspense>
+                <LastUpdated className="d-flex ms-auto" />
+              </Suspense>
+            </ErrorBoundary>
           </ChangelogButton>
         </Col>
       </Row>
 
       <MainContainer fluid>
-        <MainRow noGutters>
+        <MainRow className={'gx-0'}>
           <MainCol>{children}</MainCol>
         </MainRow>
       </MainContainer>
 
-      <FooterRow noGutters>
+      <FooterRow className={'gx-0'}>
         <FooterCol>
           <FooterContent />
         </FooterCol>
       </FooterRow>
+
+      <Snowfall />
+      <Santa />
     </Container>
   )
 }

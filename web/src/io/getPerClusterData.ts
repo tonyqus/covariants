@@ -1,73 +1,33 @@
+/* eslint-disable camelcase */
 import { pickBy } from 'lodash'
-
+import { z } from 'zod'
+import { FETCHER } from 'src/hooks/useAxiosQuery'
 import type { Country } from 'src/state/Places'
 import type { Cluster } from 'src/state/Clusters'
-import { getClusters, sortClusters } from 'src/io/getClusters'
 
-import perClusterData from '../../data/perClusterData.json'
+const clusterDistributionDatumSchema = z.object({
+  week: z.string(),
+  frequencies: z.record(z.string(), z.number().optional()),
+  interp: z.record(z.string(), z.boolean().optional()),
+  orig: z.record(z.string(), z.boolean().optional()),
+})
 
-export interface ClusterDistributionDatum {
-  week: string
-  frequencies: {
-    [country: string]: number | undefined
-  }
-  interp: {
-    [country: string]: boolean | undefined
-  }
-  orig: {
-    [country: string]: boolean | undefined
-  }
-}
+const clusterDistributionSchema = z.object({
+  cluster: z.string(),
+  distribution: clusterDistributionDatumSchema.array(),
+})
 
-export interface ClusterDistribution {
-  cluster: string
-  distribution: ClusterDistributionDatum[]
-}
+const perClusterDataRawSchema = z.object({
+  country_names: z.string().array(),
+  distributions: clusterDistributionSchema.array(),
+})
 
-export interface PerClusterDataRaw {
-  country_names: string[]
-  distributions: ClusterDistribution[]
-}
+export type PerClusterDataRaw = z.infer<typeof perClusterDataRawSchema>
+export type ClusterDistribution = z.infer<typeof clusterDistributionSchema>
+export type ClusterDistributionDatum = z.infer<typeof clusterDistributionDatumSchema>
 
-export interface PerClusterData {
-  clusters: Cluster[]
-  clusterBuildNames: Map<string, string>
-  clusterDistributions: ClusterDistribution[]
-}
-
-export function getPerClusterDataRaw(): PerClusterDataRaw {
-  return perClusterData as PerClusterDataRaw
-}
-export function getPerClusterData(): PerClusterData {
-  const perClusterData = getPerClusterDataRaw()
-
-  const clusterNames = perClusterData.distributions.map(({ cluster }) => cluster).sort()
-  const clusters = sortClusters(clusterNames.map((cluster) => ({ cluster, enabled: true })))
-
-  const clusterBuildNames: Map<string, string> = new Map(getClusters().map((c) => [c.display_name, c.build_name]))
-
-  const clusterDistributions: ClusterDistribution[] = perClusterData.distributions
-
-  return {
-    clusters,
-    clusterBuildNames,
-    clusterDistributions,
-  }
-}
-
-export function getClusterDistribution(cluster: string): ClusterDistribution {
-  const perClusterData = getPerClusterDataRaw()
-  const clusterDistributions: ClusterDistribution[] = perClusterData.distributions
-  const clusterDistribution = clusterDistributions.find((dist) => dist.cluster === cluster)
-  if (!clusterDistribution) {
-    throw new Error(`Cluster distribution not found for cluster '${cluster}'`)
-  }
-  return clusterDistribution
-}
-
-export function getCountryNames(): string[] {
-  const perClusterData = getPerClusterDataRaw()
-  return perClusterData.country_names
+export async function fetchPerClusterDataRaw() {
+  return await FETCHER.validatedFetch('/data/perClusterData.json', perClusterDataRawSchema)
 }
 
 export function filterCountries(countries: Country[], withClustersFiltered: ClusterDistribution[]) {

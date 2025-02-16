@@ -1,6 +1,6 @@
 import React, { ReactNode, useCallback } from 'react'
 
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 import ReactToggle, { ToggleProps as ReactToggleProps } from 'react-toggle'
 import 'react-toggle/style.css'
 import { StrictOmit } from 'ts-essentials'
@@ -49,6 +49,7 @@ export interface ToggleTwoLabelsProps extends StrictOmit<ReactToggleProps, 'type
   onCheckedChanged: (checked: boolean) => void
   labelLeft?: ReactNode
   labelRight?: ReactNode
+  title?: string
   className?: string
 }
 
@@ -58,6 +59,7 @@ export function ToggleTwoLabels({
   labelLeft,
   labelRight,
   className,
+  title,
   ...props
 }: ToggleTwoLabelsProps) {
   const onChange = useCallback(
@@ -68,9 +70,9 @@ export function ToggleTwoLabels({
   )
 
   return (
-    <Label htmlFor={identifier} className={className}>
+    <Label htmlFor={identifier} className={className} title={title}>
       {labelRight}
-      <span className="mr-2 ml-2">
+      <span className="me-2 ms-2">
         <ToggleTwoLabelsBase
           id={identifier}
           className="react-toggle-two-labels-custom"

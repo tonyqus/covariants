@@ -170,6 +170,104 @@ name_table = [
         "others": [],
     },
     {
+        "clade": "23A (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "XBB.1.5", "url": "https://cov-lineages.org/lineages/lineage_XBB.1.5.html"}
+        ],
+        "others": [],
+    },
+    {
+        "clade": "23B (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "XBB.1.16", "url": "https://cov-lineages.org/lineages/lineage_XBB.1.16.html"}
+        ],
+        "others": [
+            {"name": "Arcturus", "url": None}
+        ],
+    },
+    {
+        "clade": "23C (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "CH.1.1", "url": "https://cov-lineages.org/lineages/lineage_CH.1.1.html"}
+        ],
+        "others": [],
+    },
+    {
+        "clade": "23D (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "XBB.1.9", "url": "https://cov-lineages.org/lineages/lineage_XBB.1.9.html"}
+        ],
+        "others": [],
+    },
+    {
+        "clade": "23E (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "XBB.2.3", "url": "https://cov-lineages.org/lineages/lineage_XBB.2.3.html"}
+        ],
+        "others": [],
+    },
+    {
+        "clade": "23F (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "EG.5.1", "url": "https://cov-lineages.org/lineages/lineage_EG.5.1.html"}
+        ],
+        "others": [],
+    },
+    {
+        "clade": "23G (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "XBB.1.5.70", "url": "https://cov-lineages.org/lineages/lineage_XBB.1.5.70.html"}
+        ],
+        "others": [],
+    },
+    {
+        "clade": "23H (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "HK.3", "url": "https://cov-lineages.org/lineages/lineage_HK.3.html"}
+        ],
+        "others": [],
+    },
+    {
+        "clade": "23I (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "BA.2.86", "url": "https://cov-lineages.org/lineages/lineage_BA.2.86.html"}
+        ],
+        "others": [],
+    },
+    {
+        "clade": "24A (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "JN.1", "url": "https://cov-lineages.org/lineages/lineage_JN.1.html"}
+        ],
+        "others": [],
+    },
+    {
+        "clade": "24B (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "JN.1.11.1", "url": "https://cov-lineages.org/lineages/lineage_JN.1.11.1.html"}
+        ],
+        "others": [],
+    },
+    {
+        "clade": "24C (Omicron)",
+        "who": "Omicron",
+        "lineages": [
+            {"name": "KP.3", "url": "https://cov-lineages.org/lineages/lineage_KP.3.html"}
+        ],
+        "others": [],
+    },
+    {
         "clade": "20E (EU1)",
         "who": None,
         "lineages": [

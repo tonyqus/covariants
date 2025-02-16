@@ -1,14 +1,15 @@
 /* eslint-disable camelcase */
 import React, { useMemo } from 'react'
 
-import { get } from 'lodash'
+import get from 'lodash/get'
+import { styled } from 'styled-components'
+import { useRecoilValue } from 'recoil'
 import { parseVariant } from 'src/components/Common/parseVariant'
-import styled from 'styled-components'
 
 import type { Mutation, MutationColors } from 'src/types'
 import { theme } from 'src/theme'
 import { AMINOACID_COLORS, CLADE_COLORS, GENE_COLORS, NUCLEOTIDE_COLORS } from 'src/colors'
-import { getClusterNames, getClusters } from 'src/io/getClusters'
+import { ClusterDatum } from 'src/io/getClusters'
 import { LinkSmart } from 'src/components/Link/LinkSmart'
 import { parseAminoacidMutation } from 'src/components/Common/parseAminoacidMutation'
 import { parseNucleotideMutation } from 'src/components/Common/parseNucleotideMutation'
@@ -16,9 +17,8 @@ import { formatMutation } from 'src/components/Common/formatMutation'
 import { AMINOACID_NAMES, GENE_NAMES, GREEK_ALPHABET, NUCELOTIDE_NAMES } from 'src/names'
 import { colorHash } from 'src/helpers/colorHash'
 import { rainbow } from 'src/helpers/colorRainbow'
-
-const clusters = getClusters()
-const clusterNames = getClusterNames()
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
+import { clusterNamesSelector, clustersAtom } from 'src/state/Clusters'
 
 const DEFAULT_COLOR = theme.gray700
 const DEFAULT_TEXT_COLOR = theme.gray100
@@ -122,7 +122,7 @@ export function formatMutationMaybe(mutation: Mutation | string) {
   return formatMutation(mutation)
 }
 
-export function formatVariantUrl(mutation: string) {
+export function formatVariantUrl(clusters: ClusterDatum[], clusterNames: string[], mutation: string) {
   const cluster = clusters.find(({ display_name }) => display_name === mutation)
   if (!cluster) {
     console.warn(`Variant not recognized: ${mutation}. Known variants: ${clusterNames.join(', ')}`)
@@ -140,6 +140,7 @@ export interface MutationBadgeProps {
 }
 
 export function MutationBadge({ prefix, mutation, colors, tooltip }: MutationBadgeProps) {
+  const { t } = useTranslationSafe()
   const { parent, parentDelimiter, gene, left, pos, right, version, note } = mutation
 
   const parentColors = get(CLADE_COLORS, parent ?? '', { bg: DEFAULT_COLOR, fg: DEFAULT_TEXT_COLOR })
@@ -152,7 +153,7 @@ export function MutationBadge({ prefix, mutation, colors, tooltip }: MutationBad
   return (
     <MutationBadgeBox title={tooltip}>
       <MutationWrapper>
-        {prefix && <PrefixText>{prefix}</PrefixText>}
+        {prefix && <PrefixText>{t(prefix)}</PrefixText>}
         {parent && (
           <ParentText
             $backgroundColor={parentColors.bg}
@@ -180,6 +181,8 @@ export interface NucleotideMutationBadgeProps {
 }
 
 export function NucleotideMutationBadge({ mutation }: NucleotideMutationBadgeProps) {
+  const { t } = useTranslationSafe()
+
   const mutationObj = nucleotideMutationFromStringMaybe(mutation)
   if (!mutationObj) {
     return <span>{`Invalid mutation: '${JSON.stringify(mutation)}'`}</span>
@@ -189,7 +192,11 @@ export function NucleotideMutationBadge({ mutation }: NucleotideMutationBadgePro
   const wildTypeBase = get(NUCELOTIDE_NAMES, left ?? '', '')
   const variantBase = get(NUCELOTIDE_NAMES, right ?? '', '')
   const posStr = pos ?? ''
-  const tooltip = `Mutation of nucleotide ${posStr} from ${wildTypeBase} to ${variantBase}`
+  const tooltip = t('Mutation of nucleotide at position {{pos}} from {{ref}} to {{qry}}', {
+    pos: posStr,
+    ref: wildTypeBase,
+    qry: variantBase,
+  })
 
   return <MutationBadge mutation={mutationObj} colors={NUCLEOTIDE_COLORS} tooltip={tooltip} />
 }
@@ -199,6 +206,8 @@ export interface AminoacidMutationBadgeProps {
 }
 
 export function AminoacidMutationBadge({ mutation }: AminoacidMutationBadgeProps) {
+  const { t } = useTranslationSafe()
+
   const mutationObj = aminoacidMutationFromStringMaybe(mutation)
   if (!mutationObj) {
     return <span>{`Invalid mutation: '${JSON.stringify(mutation)}'`}</span>
@@ -209,7 +218,12 @@ export function AminoacidMutationBadge({ mutation }: AminoacidMutationBadgeProps
   const variantAA = right ? get(AMINOACID_NAMES, right, '') : 'one of several alternatives'
   const geneName = gene ? get(GENE_NAMES, gene, gene) : ''
   const posStr = pos ?? ''
-  const tooltip = `Mutation of amino acid ${posStr} in ${geneName} from ${wildTypeAA} to ${variantAA}`
+  const tooltip = t('Mutation of amino acid at position {{pos}} in {{gene}} from {{ref}} to {{qry}}', {
+    pos: posStr,
+    gene: geneName,
+    ref: wildTypeAA,
+    qry: variantAA,
+  })
 
   return <MutationBadge mutation={mutationObj} colors={AMINOACID_COLORS} tooltip={tooltip} />
 }
@@ -219,9 +233,14 @@ export interface ProteinBadgeProps {
 }
 
 export function ProteinBadge({ gene, ...rest }: ProteinBadgeProps) {
+  const { t } = useTranslationSafe()
+
   const { tooltip, geneColor } = useMemo(
-    () => ({ tooltip: `Protein ${gene}`, geneColor: get(GENE_COLORS, gene ?? '', DEFAULT_COLOR) }),
-    [gene],
+    () => ({
+      tooltip: t('Protein {{geneName}}', { geneName: gene }),
+      geneColor: get(GENE_COLORS, gene ?? '', DEFAULT_COLOR),
+    }),
+    [gene, t],
   )
   return (
     <MutationBadgeBox title={tooltip} {...rest}>
@@ -266,8 +285,13 @@ export interface VariantLinkBadgeProps {
 }
 
 export function VariantLinkBadge({ name, href, prefix }: VariantLinkBadgeProps) {
+  const clusters = useRecoilValue(clustersAtom)
+  const clusterNames = useRecoilValue(clusterNamesSelector)
   const { mutationObj, mutationStr } = useMemo(() => variantToObjectAndString(name), [name])
-  const url = useMemo(() => href ?? formatVariantUrl(mutationStr), [href, mutationStr])
+  const url = useMemo(
+    () => href ?? formatVariantUrl(clusters, clusterNames, mutationStr),
+    [href, mutationStr, clusters, clusterNames],
+  )
 
   if (!mutationObj) {
     return <span className="text-danger">{`VariantLinkBadge: Invalid mutation: ${JSON.stringify(name)}`}</span>
@@ -279,7 +303,7 @@ export function VariantLinkBadge({ name, href, prefix }: VariantLinkBadgeProps) 
         {
           // prettier-ignore
           `VariantLinkBadge: Variant not recognized: ${JSON.stringify(name)}.` +
-        `Known variants: ${clusterNames.join(', ')}`
+          `Known variants: ${clusterNames.join(", ")}`
         }
       </span>
     )
@@ -300,12 +324,17 @@ export interface LineageLinkBadgeProps {
 }
 
 export function LineageLinkBadge({ name, href, prefix, report }: LineageLinkBadgeProps) {
+  const { t } = useTranslationSafe()
+
   const url = useMemo(
     // prettier-ignore
-    () => (href ?? (report ? `https://cov-lineages.org/global_report_${name}.html` : '')),
+    () => (href ?? (report ? `https://cov-lineages.org/global_report_${name}.html` : "")),
     [href, report, name],
   )
-  const tooltip = useMemo(() => `Pango Lineage ${name}`, [name])
+  const tooltip = useMemo(() => {
+    const text = t('Pango Lineage')
+    return `${text} '${name}'`
+  }, [name, t])
 
   return (
     <LinkUnstyled href={url}>
@@ -341,7 +370,7 @@ const whoRainbow = rainbow(Object.keys(GREEK_ALPHABET).length, { rgb: true, lum:
 export function getWhoBadgeColor(name: string): string {
   const i = Object.keys(GREEK_ALPHABET).indexOf(name.toLowerCase().trim())
 
-  if (i < 0 || i > whoRainbow.length) {
+  if (i === -1 || i > whoRainbow.length) {
     return theme.gray500
   }
   return whoRainbow[i]

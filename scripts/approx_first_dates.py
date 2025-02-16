@@ -23,6 +23,18 @@ cluster_first_dates = {
     "22D": {"first_date": "2022-05-01"}, #omicron BA.2.75
     "22E": {"first_date": "2022-07-01"}, #omicron BQ.1
     "22F": {"first_date": "2022-08-01"}, #omicron XBB
+    "23A": {"first_date": "2022-10-28"}, #omicron XBB.1.5
+    "23B": {"first_date": "2023-01-01"}, #omicron XBB.1.16
+    "23C": {"first_date": "2022-09-01"}, #omicron CH.1.1
+    "23D": {"first_date": "2022-10-15"}, #omicron XBB.1.9
+    "23E": {"first_date": "2022-12-20"}, #omicron XBB.2.3
+    "23F": {"first_date": "2023-03-19"}, #omicron EG.5.1
+    "23G": {"first_date": "2023-03-20"}, #omicron XBB.1.5.70
+    "23H": {"first_date": "2023-06-15"}, #omicron HK.3
+    "23I": {"first_date": "2023-08-01"}, #omicron BA.2.86
+    "24A": {"first_date": "2023-09-15"}, #omicron JN.1
+    "24B": {"first_date": "2024-01-01"}, #omicron JN.1.11.1
+    "24C": {"first_date": "2024-02-01"}, #omicron KP.3
     "Kappa": {"first_date": "2020-10-30"}, #Kappa
     "Delta417": {"first_date": "2020-10-30"}, #Delta plus (same as delta)
     "Eta": {"first_date": "2020-11-21"}, #Eta

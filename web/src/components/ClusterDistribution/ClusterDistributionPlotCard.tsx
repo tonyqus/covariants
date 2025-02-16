@@ -2,7 +2,7 @@
 import React from 'react'
 
 import { Card, CardBody, CardHeader, Col, Row } from 'reactstrap'
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 
 import type { ClusterDistributionDatum } from 'src/io/getPerClusterData'
 import { Link } from 'src/components/Link/Link'
@@ -38,7 +38,7 @@ export function ClusterDistributionPlotCard({
 
       <CardBody className="p-0">
         <Col className="p-0">
-          <Row noGutters>
+          <Row className={'gx-0'}>
             <Col className="p-0">
               <ClusterDistributionPlot distribution={distribution} country_names={country_names} />
             </Col>

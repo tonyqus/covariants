@@ -1,12 +1,13 @@
 import React, { useMemo, useState, useCallback } from 'react'
 
-import Axios from 'axios'
-import { get } from 'lodash'
-import { useQuery } from 'react-query'
-import { AcknowledgementsError } from 'src/components/Acknowledgements/AcknowledgementsError'
-import styled from 'styled-components'
+import axios from 'axios'
+import get from 'lodash/get'
+import { useQuery } from '@tanstack/react-query'
+import { styled } from 'styled-components'
 import { Popover as PopoverBase, PopoverBody as PopoverBodyBase, PopoverHeader as PopoverHeaderBase } from 'reactstrap'
 import { ThreeDots as ThreeDotsLoader } from 'react-loader-spinner'
+import { AcknowledgementsError } from 'src/components/Acknowledgements/AcknowledgementsError'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
 
 export const Popover = styled(PopoverBase)`
   .popover {
@@ -60,7 +61,7 @@ export function getEpiIslUrl(epiIsl: string) {
 }
 
 function getString(obj: unknown, objPath: string, defaultValue?: string): string {
-  const property: string | unknown = get(obj, objPath, defaultValue)
+  const property: unknown = get(obj, objPath, defaultValue)
   if (typeof property !== 'string') {
     return defaultValue ?? '-'
   }
@@ -77,15 +78,15 @@ export function validateEpiIslData(data: unknown): AcknowledgementEpiIslDatum {
 export function useQueryAcknowledgementData(epiIsl: string) {
   const url: string | undefined = useMemo(() => getEpiIslUrl(epiIsl), [epiIsl])
 
-  return useQuery(
-    ['acknowledgement_data', epiIsl],
-    async () => {
+  return useQuery({
+    queryKey: ['acknowledgement_data', epiIsl],
+    queryFn: async () => {
       if (!url) {
         throw new Error(
           `Unable to fetch acknowledgements data from GISAID: Unable to construct request URL: EPI ISL is incorrect: "${epiIsl}"`,
         )
       }
-      const res = await Axios.get(url)
+      const res = await axios.get(url)
       if (!res.data) {
         throw new Error(
           `Unable to fetch acknowledgements data from GISAID: request to URL "${url}" resulted in no data`,
@@ -93,14 +94,12 @@ export function useQueryAcknowledgementData(epiIsl: string) {
       }
       return validateEpiIslData(res.data)
     },
-    {
-      staleTime: Number.POSITIVE_INFINITY,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-      refetchInterval: Number.POSITIVE_INFINITY,
-    },
-  )
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    refetchInterval: Number.POSITIVE_INFINITY,
+  })
 }
 
 export interface AcknowledgementEpiIslPopupProps {
@@ -110,6 +109,7 @@ export interface AcknowledgementEpiIslPopupProps {
 }
 
 export function AcknowledgementEpiIslPopup({ target, isOpen, epiIsl }: AcknowledgementEpiIslPopupProps) {
+  const { t } = useTranslationSafe()
   const { isLoading, isFetching, isError, data, error } = useQueryAcknowledgementData(epiIsl)
 
   return (
@@ -129,15 +129,15 @@ export function AcknowledgementEpiIslPopup({ target, isOpen, epiIsl }: Acknowled
         {data && (
           <section>
             <p>
-              <b>{'Originating lab: '}</b>
+              <b>{t('Originating lab: {{origLab}}', { origLab: '' })}</b>
               <span>{data.origLab}</span>
             </p>
             <p>
-              <b>{'Submitting lab: '}</b>
+              <b>{t('Submitting lab: {{submLab}}', { submLab: '' })}</b>
               <span>{data.submLab}</span>
             </p>
             <p>
-              <b>{'Authors: '}</b>
+              <b>{t('Authors: {{authors}}', { authors: '' })}</b>
               <span>{data.authors}</span>
             </p>
           </section>

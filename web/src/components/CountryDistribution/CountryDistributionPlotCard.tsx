@@ -1,21 +1,25 @@
 /* eslint-disable camelcase */
-import React from 'react'
+import React, { Suspense } from 'react'
 import { Card, CardBody, CardHeader, Col, Row } from 'reactstrap'
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
 import type { CountryDistributionDatum } from 'src/io/getPerCountryData'
 import { PlotCardTitle } from 'src/components/Common/PlotCardTitle'
 import { CountryFlagProps } from 'src/components/Common/CountryFlag'
 import { USStateCodeProps } from 'src/components/Common/USStateCode'
 import { CountryDistributionPlot } from 'src/components/CountryDistribution/CountryDistributionPlot'
+import { LOADING } from 'src/components/Loading/Loading'
 
 const FlagAlignment = styled.span`
   display: flex;
   align-items: center;
+
   > * + * {
     margin-left: 0.5em;
   }
 `
+
 export interface CountryDistributionPlotCardProps {
   country: string
   distribution: CountryDistributionDatum[]
@@ -29,22 +33,26 @@ export function CountryDistributionPlotCard({
   cluster_names,
   Icon,
 }: CountryDistributionPlotCardProps) {
+  const { t } = useTranslationSafe()
+
   return (
     <Card className="m-2">
       <CardHeader className="d-flex flex-sm-column">
         <PlotCardTitle>
           <FlagAlignment>
             {Icon && <Icon country={country} />}
-            <span>{country}</span>
+            <span>{t(country)}</span>
           </FlagAlignment>
         </PlotCardTitle>
       </CardHeader>
 
       <CardBody className="p-0">
         <Col className="p-0">
-          <Row noGutters>
+          <Row className={'gx-0'}>
             <Col className="p-0">
-              <CountryDistributionPlot distribution={distribution} cluster_names={cluster_names} />
+              <Suspense fallback={LOADING}>
+                <CountryDistributionPlot distribution={distribution} cluster_names={cluster_names} />
+              </Suspense>
             </Col>
           </Row>
         </Col>

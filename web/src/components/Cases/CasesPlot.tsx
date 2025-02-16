@@ -5,15 +5,18 @@ import dynamic from 'next/dynamic'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Label } from 'recharts'
 import { DateTime } from 'luxon'
 
+import { useTheme } from 'styled-components'
+import { useRecoilValue } from 'recoil'
+import { CasesPlotTooltip } from './CasesPlotTooltip'
 import type { PerCountryCasesDistributionDatum } from 'src/io/getPerCountryCasesData'
-import { ticks, timeDomain } from 'src/io/getParams'
-import { CLUSTER_NAME_OTHERS, getClusterColor } from 'src/io/getClusters'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
+import { CLUSTER_NAME_OTHERS } from 'src/io/getClusters'
 import { formatDateHumanely } from 'src/helpers/format'
 import { adjustTicks } from 'src/helpers/adjustTicks'
 import { PlotPlaceholder } from 'src/components/Common/PlotPlaceholder'
 import { ChartContainer } from 'src/components/Common/ChartContainer'
-import { useTheme } from 'styled-components'
-import { CasesPlotTooltip } from './CasesPlotTooltip'
+import { ticksSelector, timeDomainSelector } from 'src/state/Params'
+import { getClusterColorsSelector } from 'src/state/Clusters'
 
 const CHART_MARGIN = { left: 10, top: 12, bottom: 6, right: 12 }
 const ALLOW_ESCAPE_VIEW_BOX = { x: false, y: true }
@@ -24,8 +27,13 @@ export interface CasesPlotProps {
 }
 
 export function CasesPlotComponent({ cluster_names, distribution }: CasesPlotProps) {
+  const { t } = useTranslationSafe()
   const theme = useTheme()
   const chartRef = useRef(null)
+  const getClusterColor = useRecoilValue(getClusterColorsSelector)
+
+  const ticks = useRecoilValue(ticksSelector)
+  const timeDomain = useRecoilValue(timeDomainSelector)
 
   const data = distribution.map(({ week, stand_total_cases, stand_estimated_cases }) => {
     const weekSec = DateTime.fromFormat(week, 'yyyy-MM-dd').toSeconds()
@@ -69,7 +77,7 @@ export function CasesPlotComponent({ cluster_names, distribution }: CasesPlotPro
                 position="insideLeft"
                 offset={0}
                 angle={270}
-                value={'Cases per million people'}
+                value={t('Cases per million people')}
               />
             </YAxis>
 

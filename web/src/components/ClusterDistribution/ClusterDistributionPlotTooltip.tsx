@@ -2,14 +2,16 @@ import React from 'react'
 
 import { get, sortBy, reverse, uniqBy } from 'lodash'
 import { useRecoilValue } from 'recoil'
-import { ColoredHorizontalLineIcon } from 'src/components/Common/ColoredHorizontalLineIcon'
-import { tooltipSortAtom } from 'src/state/TooltipSort'
-import { theme } from 'src/theme'
-import styled from 'styled-components'
-
+import { styled } from 'styled-components'
 import type { Props as DefaultTooltipContentProps } from 'recharts/types/component/DefaultTooltipContent'
+import { ColoredHorizontalLineIcon } from 'src/components/Common/ColoredHorizontalLineIcon'
+import { tooltipSortAtom, TooltipSortCriterion } from 'src/state/TooltipSort'
+import { theme } from 'src/theme'
+
+import type { ClusterDistributionDatum } from 'src/io/getPerClusterData'
 import { formatDateWeekly, formatProportion } from 'src/helpers/format'
-import { getCountryColor, getCountryStrokeDashArray } from 'src/io/getCountryColor'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
+import { getCountryStylesSelector } from 'src/state/CountryStyles'
 
 const EPSILON = 1e-2
 
@@ -51,7 +53,9 @@ const TooltipTableBody = styled.tbody``
 export type ClusterDistributionPlotTooltipProps = DefaultTooltipContentProps<number, string>
 
 export function ClusterDistributionPlotTooltip(props: ClusterDistributionPlotTooltipProps) {
+  const { t } = useTranslationSafe()
   const { criterion, reversed } = useRecoilValue(tooltipSortAtom)
+  const getCountryStyles = useRecoilValue(getCountryStylesSelector)
 
   const { payload } = props
   if (!payload || payload.length === 0) {
@@ -60,23 +64,25 @@ export function ClusterDistributionPlotTooltip(props: ClusterDistributionPlotToo
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const data = payload[0]?.payload as ClusterDistributionDatum
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
   const week = formatDateWeekly(data?.week)
 
-  let payloadSorted = sortBy(payload, criterion === 'country' ? 'name' : 'value')
+  let payloadSorted = sortBy(payload, criterion === TooltipSortCriterion.country ? 'name' : 'value')
 
   // sortBy sorts in ascending order, but if sorting by frequency the natural/non-reversed order is descending
 
-  if ((criterion !== 'frequency' && reversed) || (criterion === 'frequency' && !reversed)) {
+  if (
+    (criterion !== TooltipSortCriterion.frequency && reversed) ||
+    (criterion === TooltipSortCriterion.frequency && !reversed)
+  ) {
     payloadSorted = reverse(payloadSorted)
   }
 
   const payloadUnique = uniqBy(payloadSorted, (payload) => payload.name)
+  const payloadNonZero = payloadUnique.filter((pld) => pld.value !== undefined && pld.value > EPSILON)
 
   return (
     <Tooltip>
@@ -85,13 +91,13 @@ export function ClusterDistributionPlotTooltip(props: ClusterDistributionPlotToo
       <TooltipTable>
         <thead>
           <tr className="w-100">
-            <th className="px-2 text-left">{'Country'}</th>
+            <th className="px-2 text-left">{t('Country')}</th>
             <th />
-            <th className="px-2 text-right">{'Frequency'}</th>
+            <th className="px-2 text-right">{t('Frequency')}</th>
           </tr>
         </thead>
         <TooltipTableBody>
-          {payloadUnique.map(({ name, value, payload }) => {
+          {payloadNonZero.map(({ name, value, payload }) => {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             const interpolated = !get(payload?.orig, name, false) // eslint-disable-line @typescript-eslint/no-unsafe-member-access
@@ -102,11 +108,11 @@ export function ClusterDistributionPlotTooltip(props: ClusterDistributionPlotToo
                   <ColoredHorizontalLineIcon
                     width={theme.plot.country.legend.lineIcon.width}
                     height={theme.plot.country.legend.lineIcon.height}
-                    stroke={getCountryColor(country)}
+                    stroke={getCountryStyles(country).color}
                     strokeWidth={theme.plot.country.legend.lineIcon.thickness}
-                    strokeDasharray={getCountryStrokeDashArray(country)}
+                    strokeDasharray={getCountryStyles(country).strokeDashArray}
                   />
-                  <span className="ml-2">{country}</span>
+                  <span className="ms-2">{t(country)}</span>
                 </td>
                 <td>{interpolated && '*'}</td>
                 <td className="px-2 text-right">
@@ -119,7 +125,7 @@ export function ClusterDistributionPlotTooltip(props: ClusterDistributionPlotToo
       </TooltipTable>
 
       <TooltipFooter>
-        <small>{'* Interpolated values'}</small>
+        <small>{t('{{asterisk}} Interpolated values', { asterisk: '*' })}</small>
       </TooltipFooter>
     </Tooltip>
   )

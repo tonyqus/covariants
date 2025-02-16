@@ -1,8 +1,12 @@
 import React, { useCallback } from 'react'
 
 import { Button, Col, Row } from 'reactstrap'
+import { styled } from 'styled-components'
+import { useRecoilState, useRecoilValue } from 'recoil'
 import { safeZip } from 'src/helpers/safeZip'
-import styled from 'styled-components'
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
+import { perCountryDataRegionsSelector } from 'src/state/PerCountryData'
+import { perCountryRegionAtom } from 'src/state/PlacesForPerCountryData'
 
 export const RegionSwitcherContainer = styled.div`
   margin: 5px 5px;
@@ -32,37 +36,35 @@ export const RegionButton = styled(Button)`
   margin: 5px 5px;
 `
 
-export interface RegionSwitcherProps {
-  regions: string[]
-  regionsHaveData: boolean[]
-  currentRegion: string
-  setCurrentRegion(region: string): void
-}
+export function RegionSwitcher() {
+  const { t } = useTranslationSafe()
 
-export function RegionSwitcher({ regions, regionsHaveData, currentRegion, setCurrentRegion }: RegionSwitcherProps) {
+  const { regionNames, regionsHaveData } = useRecoilValue(perCountryDataRegionsSelector)
+  const [currentRegion, setCurrentRegion] = useRecoilState(perCountryRegionAtom)
+
   const onRegionButtonClick = useCallback((region: string) => () => setCurrentRegion(region), [setCurrentRegion])
   const getRegionButtonColor = (region: string) => (currentRegion === region ? 'success' : undefined)
 
   return (
     <RegionSwitcherContainer>
-      <Row noGutters>
+      <Row className={'gx-0'}>
         <Col>
-          <RegionSwitcherHeading>{'Choose region'}</RegionSwitcherHeading>
+          <RegionSwitcherHeading>{t('Choose region')}</RegionSwitcherHeading>
         </Col>
       </Row>
 
-      <Row noGutters>
+      <Row className={'gx-0'}>
         <Col className="d-flex">
           <RegionButtonsContainer className="mx-auto">
-            {safeZip(regions, regionsHaveData).map(([region, regionHaveData]) => (
+            {safeZip(regionNames, regionsHaveData).map(([region, regionHaveData]) => (
               <RegionButtonWrapper key={region}>
                 <RegionButton
                   color={getRegionButtonColor(region)}
                   onClick={onRegionButtonClick(region)}
                   disabled={!regionHaveData}
-                  title={regionHaveData ? region : 'Coming soon!'}
+                  title={regionHaveData ? t(region) : t('Coming soon!')}
                 >
-                  {region}
+                  {t(region)}
                 </RegionButton>
               </RegionButtonWrapper>
             ))}

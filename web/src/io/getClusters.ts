@@ -1,77 +1,58 @@
 /* eslint-disable camelcase */
 import { groupBy, isNil } from 'lodash'
-import { notUndefinedOrNull } from 'src/helpers/notUndefined'
+import { z } from 'zod'
 
-import type { Mutation } from 'src/types'
 import type { Cluster } from 'src/state/Clusters'
-import { theme } from 'src/theme'
 
-import clustersJson from 'src/../data/clusters.json'
+import { FETCHER } from 'src/hooks/useAxiosQuery'
 
-export const CLUSTER_NAME_OTHERS = 'others' as const
+export const CLUSTER_NAME_OTHERS = 'others'
 
-export interface AquariaDatum {
-  gene: string
-  url: string
-}
+const mutationSchema = z.object({
+  parent: z.string().optional(),
+  parentDelimiter: z.string().optional(),
+  gene: z.string().optional(),
+  left: z.string().optional(),
+  pos: z.number().optional(),
+  right: z.string().optional(),
+  version: z.string().optional(),
+  note: z.string().optional(),
+})
 
-export type ClusterDatum = {
-  build_name: string
-  old_build_names?: string[]
-  nextstrain_url?: string
-  col: string
-  display_name: string
-  alt_display_name?: string[]
-  snps: number[]
-  mutations?: {
-    nonsynonymous?: Mutation[]
-    synonymous?: Mutation[]
-  }
-  aquaria_urls?: AquariaDatum[]
-  type?: string
-  important?: boolean
-  has_no_page?: boolean
-}
+const aquariaDatumSchema = z.object({
+  gene: z.string(),
+  url: z.string(),
+})
 
-export function getClusters(): ClusterDatum[] {
-  return clustersJson.clusters
-}
+const clusterDatumSchema = z.object({
+  build_name: z.string(),
+  old_build_names: z.string().array().optional(),
+  nextstrain_url: z.string().optional(),
+  col: z.string(),
+  display_name: z.string(),
+  alt_display_name: z.string().array().optional(),
+  snps: z.number().array(),
+  mutations: z
+    .object({
+      nonsynonymous: mutationSchema.array().optional(),
+      synonymous: mutationSchema.array().optional(),
+    })
+    .optional(),
+  aquaria_urls: aquariaDatumSchema.array().optional(),
+  type: z.string().optional(),
+  important: z.boolean().optional(),
+  has_no_page: z.boolean().optional(),
+})
 
-export function getDefaultCluster(): ClusterDatum {
-  return getClusters()[0]
-}
+const clusterDataRawSchema = z.object({
+  clusters: clusterDatumSchema.array(),
+})
 
-export function getClusterNames() {
-  return getClusters().map((cluster) => cluster.display_name)
-}
+export type ClusterDatum = z.infer<typeof clusterDatumSchema>
 
-export function getClusterRedirects(): Map<string, string> {
-  return getClusters().reduce((result, cluster) => {
-    if (cluster.old_build_names) {
-      cluster.old_build_names.forEach((oldName) => result.set(oldName, cluster.build_name))
-    }
-    return result
-  }, new Map<string, string>())
-}
-
-export function getClusterBuildNames() {
-  return getClusters().map((cluster) => cluster.build_name)
-}
-
-export function getClusterOldBuildNames() {
-  return getClusters()
-    .flatMap((cluster) => cluster.old_build_names)
-    .filter(notUndefinedOrNull)
-}
-
-export function getClusterColor(clusterName: string) {
-  if (clusterName === CLUSTER_NAME_OTHERS) {
-    return theme.clusters.color.others
-  }
-
-  const clusters = getClusters()
-  const found = clusters.find(({ display_name }) => display_name === clusterName)
-  return found ? found.col : theme.clusters.color.unknown
+export async function fetchClusters(): Promise<ClusterDatum[]> {
+  const clusters = await FETCHER.validatedFetch('/data/clusters.json', clusterDataRawSchema)
+  return clusters.clusters
 }
 
 export type ClusterDataGrouped = Record<string, ClusterDatum[]>
@@ -81,8 +62,7 @@ export function getClustersGrouped(clusters: ClusterDatum[]): ClusterDataGrouped
   return groupBy(clustersWithType, 'type')
 }
 
-export function sortClusters(clusters: Cluster[]): Cluster[] {
-  const clusterNames = getClusterNames()
+export function sortClustersByClusterNames(clusters: Cluster[], clusterNames: string[]): Cluster[] {
   return clusterNames.reduce((result, name) => {
     const cluster = clusters.find((cluster) => cluster.cluster === name)
     if (cluster) {

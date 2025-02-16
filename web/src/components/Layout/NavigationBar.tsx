@@ -1,14 +1,16 @@
 import { useRouter } from 'next/router'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 import {
+  Col,
   Collapse,
   Nav as NavBase,
   Navbar as NavbarBase,
   NavbarToggler as NavbarTogglerBase,
   NavItem as NavItemBase,
   NavLink as NavLinkBase,
+  Row,
 } from 'reactstrap'
 import classNames from 'classnames'
 import { FaGithub, FaTwitter } from 'react-icons/fa'
@@ -16,31 +18,12 @@ import { FaGithub, FaTwitter } from 'react-icons/fa'
 import BrandLogoBase from 'src/assets/images/logo.svg'
 import BrandLogoLargeBase from 'src/assets/images/logo_text_right.svg'
 
+import { useTranslationSafe } from 'src/helpers/useTranslationSafe'
 import { Link } from 'src/components/Link/Link'
 import { LinkExternal } from 'src/components/Link/LinkExternal'
 import { TWITTER_USERNAME_RAW, URL_GITHUB } from 'src/constants'
-
-
-let navLinksLeft: Record<string, string> = {
-  '/': 'Home',
-  '/faq': 'FAQ',
-  '/variants': 'Variants',
-  '/per-country': 'Per country',
-  '/per-variant': 'Per variant',
-  '/cases': 'Cases',
-  '/shared-mutations': 'Shared Mutations',
-  '/acknowledgements': 'Acknowledgements',
-}
-let navLinksLeft_zh: Record<string, string> = {
-  '/': '首页',
-  '/faq': '常见问题',
-  '/variants': '病毒变种',
-  '/per-country': '按国家',
-  '/per-variant': '按病毒变种',
-  '/cases': '病例',
-  '/shared-mutations': '共享的突变',
-  '/acknowledgements': '共识',
-}
+import { ChristmasToggle } from 'src/components/Common/Christmas'
+import { LanguageSwitcher } from 'src/components/Layout/LanguageSwitcher'
 
 export function matchingUrl(url: string, pathname: string): boolean {
   if (pathname.startsWith('/variants')) {
@@ -48,29 +31,6 @@ export function matchingUrl(url: string, pathname: string): boolean {
   }
 
   return url === pathname
-}
-
-const navLinksRight = [
-  {
-    text: 'Follow',
-    title: `Follow @${TWITTER_USERNAME_RAW} on Twitter`,
-    url: `https://twitter.com/${TWITTER_USERNAME_RAW}`,
-    alt: 'Link to Twitter, with blue Twitter bird logo',
-    icon: <FaTwitter size={22} color="#08a0e9" />,
-    color: '#08a0e9',
-  },
-  {
-    text: 'Fork',
-    title: "Let's collaborate on GitHub",
-    url: URL_GITHUB,
-    alt: 'Link to Github page, with grey Github Octocat logo',
-    icon: <FaGithub size={22} color="#24292E" />,
-    color: '#24292E',
-  },
-]
-
-if (process.env.NODE_ENV === 'development' || process.env.DOMAIN?.includes('vercel')) {
-  navLinksLeft = { ...navLinksLeft, '/debug-badges': 'Debug badges' }
 }
 
 export const Navbar = styled(NavbarBase)`
@@ -88,6 +48,7 @@ export const NavWrappable = styled(NavBase)`
 
   scrollbar-width: none;
   -ms-overflow-style: none;
+
   &::-webkit-scrollbar {
     display: none;
   }
@@ -95,12 +56,20 @@ export const NavWrappable = styled(NavBase)`
   width: 100%;
 
   background-image: linear-gradient(to right, white, white), linear-gradient(to right, white, white),
-    linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0)),
-    linear-gradient(to left, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0));
-  background-position: left center, right center, left center, right center;
+    linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)),
+    linear-gradient(to left, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0));
+  background-position:
+    left center,
+    right center,
+    left center,
+    right center;
   background-repeat: no-repeat;
   background-color: white;
-  background-size: 20px 100%, 20px 100%, 10px 100%, 10px 100%;
+  background-size:
+    20px 100%,
+    20px 100%,
+    10px 100%,
+    10px 100%;
   background-attachment: local, local, scroll, scroll;
 
   & .nav-link {
@@ -151,13 +120,49 @@ export const BrandLogoLarge = styled(BrandLogoLargeBase)`
 `
 
 export function NavigationBar() {
-  const { pathname,locale } = useRouter()
+  const { t } = useTranslationSafe()
+  const { pathname } = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const toggle = useCallback(() => setIsOpen(!isOpen), [isOpen])
-  if(locale=="zh-CN")
-  {
-    navLinksLeft= navLinksLeft_zh;
-  }
+
+  const navLinksLeft = useMemo(() => {
+    let navLinksLeft: Record<string, string> = {
+      '/': t('Home'),
+      '/faq': t('FAQ'),
+      '/variants': t('Variants'),
+      '/per-country': t('Per country'),
+      '/per-variant': t('Per variant'),
+      '/cases': t('Cases'),
+      '/shared-mutations': t('Shared Mutations'),
+      '/acknowledgements': t('Acknowledgements'),
+    }
+    if (process.env.NODE_ENV === 'development' || process.env.DOMAIN?.includes('vercel')) {
+      navLinksLeft = { ...navLinksLeft, '/debug-badges': 'Debug badges' }
+    }
+    return navLinksLeft
+  }, [t])
+
+  const navLinksRight = useMemo(() => {
+    return [
+      {
+        text: t('Follow'),
+        title: t('Follow {{twitterUsername}} on Twitter', { twitterUsername: `@${TWITTER_USERNAME_RAW}` }),
+        url: `https://twitter.com/${TWITTER_USERNAME_RAW}`,
+        alt: t('Link to Twitter, with blue Twitter bird logo'),
+        icon: <FaTwitter size={22} color="#08a0e9" />,
+        color: '#08a0e9',
+      },
+      {
+        text: t('Fork'),
+        title: t("Let's collaborate on GitHub"),
+        url: URL_GITHUB,
+        alt: t('Link to Github page, with grey Github Octocat logo'),
+        icon: <FaGithub size={22} color="#24292E" />,
+        color: '#24292E',
+      },
+    ]
+  }, [t])
+
   return (
     <Navbar expand="md" color="light" light role="navigation">
       <Link href="/">
@@ -180,27 +185,25 @@ export function NavigationBar() {
           })}
         </NavWrappable>
 
-        <Nav className="ml-auto" navbar>
-          <NavItem key="English">
-          <NavLink href="/">
-            <span>English</span>
-          </NavLink>
-          </NavItem>
-          <NavItem key="Chinese">
-          <NavLink href="/zh-CN">
-            <span>中文</span>
-          </NavLink>
+        <Nav className="ms-auto" navbar>
+          <NavItem>
+            <Row className={'gx-0'}>
+              <Col className="mt-2 mx-3">
+                <ChristmasToggle />
+              </Col>
+            </Row>
           </NavItem>
           {navLinksRight.map(({ text, title, url, alt, icon }) => (
             <NavItem key={title}>
               <NavLink tag={LinkRight} title={title} href={url} alt={alt} icon={null}>
                 <span>
-                  <span className="mr-2">{icon}</span>
+                  <span className="me-2">{icon}</span>
                   <span className="d-inline d-sm-none">{text}</span>
                 </span>
               </NavLink>
             </NavItem>
           ))}
+          <LanguageSwitcher />
         </Nav>
       </Collapse>
     </Navbar>

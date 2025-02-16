@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import React from 'react'
 import { Card, CardBody, CardHeader, Col, Row } from 'reactstrap'
-import styled from 'styled-components'
+import { styled } from 'styled-components'
 
 import type { PerCountryCasesDistributionDatum } from 'src/io/getPerCountryCasesData'
 import { PlotCardTitle } from 'src/components/Common/PlotCardTitle'
@@ -37,7 +37,7 @@ export function CasesPlotCard({ country, distribution, cluster_names, Icon }: Ca
 
       <CardBody className="p-0">
         <Col className="p-0">
-          <Row noGutters>
+          <Row className={'gx-0'}>
             <Col className="p-0">
               <CasesPlot distribution={distribution} cluster_names={cluster_names} />
             </Col>
